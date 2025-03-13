@@ -32,4 +32,5 @@ run_pipeline(type = "c", years = 3, infType = "spillover", runtype = "stdLambda_
 
 # Run Discrete time simulations
 run_pipeline(type = "d", years = 7, infType = "seeded", runtype = "stdD_pub_", pct = 0.02, 
-             prop_superSpreader = 0.1, reps = 500, sizes = c(10, 50, 100, 250, 500, 750), pth = getwd(), scaled_plots = T)
+             prop_superSpreader = 0.1, reps = 500, sizes = c(10, 50, 100, 250, 500, 750), pth = getwd(), 
+             scaled_plots = T)
