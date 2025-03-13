@@ -6,3 +6,4 @@
 *.rdata
 *.jpeg
 *.png
+.Rproj.user

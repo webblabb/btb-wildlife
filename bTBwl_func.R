@@ -15,7 +15,7 @@ library(stringr)
 #### time & population varied model functions ####
 ##################################################
 # seasonal birth pulse function
-alpha <- function(Amp = 1, synchrony = 0, phase = 0, start_q = 1, t){ 
+alpha <- function(Amp = 1, synchrony = 0, phase = 0, start_q = 1, t = NULL){ 
   return( Amp*exp( -synchrony*( cos((pi/12)*( t + 3*(start_q-1) - phase) ) )^2 ) ) 
 }
 
@@ -494,69 +494,487 @@ getLambda_vec <- function(data = NA, type = ''){
 }
 
 
-library(deSolve); library(tidyverse); library(ggplot2); library(ggpubr);
-library(grid); library(rstudioapi); library(foreach); library(doParallel);
-library(RColorBrewer); library(scales);
+# library(deSolve); library(tidyverse); library(ggplot2); library(ggpubr);
+# library(grid); library(rstudioapi); library(foreach); library(doParallel);
+# library(RColorBrewer); library(scales);
+# 
+# initialize_simulation <- function(run_type, inf_type, years, herd_sizes, pct, ss_prop) {
+#   list(
+#     years = years,
+#     times = seq(0, years * 12, by = 12 / 365),
+#     seedQuarter = 1,
+#     prop_superSpreader = ss_prop,
+#     pct = pct,
+#     reps = 50,
+#     sizes = herd_sizes,
+#     infType = inf_type,
+#     runtype = run_type,
+#     name_out = paste0(run_type, inf_type, "_", pct, '-', ss_prop, '-'),
+#     pth = "/home/webblab/Documents/Brandon/bTB_wildlife_code/",
+#     save_runs = TRUE,
+#     save_plots = TRUE
+#   )
+# }
+# 
+# setup_parallel <- function() {
+#   n.cores <- floor(detectCores() * 3 / 4)
+#   cl <- makeCluster(n.cores)
+#   registerDoParallel(cl)
+#   clusterEvalQ(cl, { library(deSolve); library(tidyverse); library(ggplot2); library(ggpubr);
+#     library(grid); library(rstudioapi); library(foreach); library(doParallel);
+#     library(RColorBrewer); library(scales) })
+#   return(cl)
+# }
+# 
+# run_model <- function(params, size) {
+#   pars <- parameter_set_wl(k = size, scenario = params$infType, initial_exposed = params$pct * size,
+#                            SS_prop = params$prop_superSpreader, start_quarter = params$seedQuarter)
+#   
+#   X0_full <- c(S = pars["S_0"], E = pars["E1_0"], I = pars["I_0"],
+#                sS = pars["SuperS_0"], sE = pars["SuperE1_0"], sI = pars["SuperI_0"])
+#   
+#   out <- as.data.frame(ode(func = SEI_model_full, y = X0_full, times = params$times, parms = pars, method = "rk4"))
+#   out$N <- rowSums(out[, c("S", "E", "I", "sS", "sE", "sI")])
+#   out %>% pivot_longer(-time, names_to = "variable", values_to = "value")
+# }
+# 
+# plot_results <- function(data, params, size) {
+#   SEIcols <- RColorBrewer::brewer.pal(11, "Spectral")[c(1,2,4,5,8,9,10)]
+#   
+#   ggplot(data) +
+#     geom_line(aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
+#     scale_color_manual(values = SEIcols) +
+#     scale_y_continuous(limits = c(0, NA)) +
+#     scale_x_continuous(breaks = seq(0, params$years * 12, 12), limits = c(0, params$years * 12))
+# }
+# 
+# main <- function() {
+#   params <- initialize_simulation("test_", "seeded", 3, c(10, 50, 100, 250, 500), 0.02, 0.05)
+#   cl <- setup_parallel()
+#   
+#   foreach(size = params$sizes, .packages = c("deSolve", "tidyverse", "ggplot2")) %dopar% {
+#     data <- run_model(params, size)
+#     plot_results(data, params, size)
+#     if (params$save_runs) save(data, file = paste0('test_runs/', params$name_out, size, '-', Sys.Date(), '.RData'))
+#   }
+#   
+#   stopCluster(cl)
+# }
 
-initialize_simulation <- function(run_type, inf_type, years, herd_sizes, pct, ss_prop) {
+####################
+## Initialization ##
+####################
+initialize_environment <- function() {
+  rm(list = ls())
+  setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+  source(file = "bTBwl_func.R")
+  library(deSolve)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(grid)
+  library(rstudioapi)
+  library(foreach)
+  library(doParallel)
+  library(RColorBrewer)
+  library(scales)
+}
+
+setup_parameters <- function(years, infType, runtype, pct, prop_superSpreader, reps, sizes, pth) {
   list(
     years = years,
-    times = seq(0, years * 12, by = 12 / 365),
+    times = seq(from = 0, to = years * 12, by = 12 / 365),
     seedQuarter = 1,
-    prop_superSpreader = ss_prop,
+    prop_superSpreader = prop_superSpreader,
+    lambda_factor = 1.2,
+    type_of_integral = 3,
     pct = pct,
-    reps = 50,
-    sizes = herd_sizes,
-    infType = inf_type,
-    runtype = run_type,
-    name_out = paste0(run_type, inf_type, "_", pct, '-', ss_prop, '-'),
-    pth = "/home/webblab/Documents/Brandon/bTB_wildlife_code/",
+    verbose = 0,
+    reps = reps,
+    sizes = sizes,
+    infType = infType,
+    runtype = runtype,
+    name_out = paste0(runtype, infType, "_", pct, '-', prop_superSpreader, '-'),
+    pth = pth,
     save_runs = TRUE,
-    save_plots = TRUE
+    save_plots = TRUE,
+    test_mode = FALSE,
+    test_birth = FALSE,
+    test_death_n = FALSE,
+    test_death_h = FALSE,
+    test_disease = FALSE,
+    n.cores = floor(detectCores() * (3 / 4))
   )
 }
 
-setup_parallel <- function() {
-  n.cores <- floor(detectCores() * 3 / 4)
+initialize_cluster <- function(n.cores) {
   cl <- makeCluster(n.cores)
   registerDoParallel(cl)
-  clusterEvalQ(cl, { library(deSolve); library(tidyverse); library(ggplot2); library(ggpubr);
-    library(grid); library(rstudioapi); library(foreach); library(doParallel);
-    library(RColorBrewer); library(scales) })
-  return(cl)
+  clusterEvalQ(cl, {
+    library(deSolve)
+    library(tidyverse)
+    library(ggplot2)
+    library(ggpubr)
+    library(grid)
+    library(rstudioapi)
+    library(foreach)
+    library(doParallel)
+    library(RColorBrewer)
+    library(scales)
+    source("bTBwl_func.R")
+  })
+  
+  clusterExport(cl, c("run_simulation",
+                      "parameter_set_wl",
+                      "SEI_model_full"))
+  cl
 }
 
-run_model <- function(params, size) {
-  pars <- parameter_set_wl(k = size, scenario = params$infType, initial_exposed = params$pct * size,
-                           SS_prop = params$prop_superSpreader, start_quarter = params$seedQuarter)
-  
-  X0_full <- c(S = pars["S_0"], E = pars["E1_0"], I = pars["I_0"],
-               sS = pars["SuperS_0"], sE = pars["SuperE1_0"], sI = pars["SuperI_0"])
-  
-  out <- as.data.frame(ode(func = SEI_model_full, y = X0_full, times = params$times, parms = pars, method = "rk4"))
-  out$N <- rowSums(out[, c("S", "E", "I", "sS", "sE", "sI")])
-  out %>% pivot_longer(-time, names_to = "variable", values_to = "value")
+create_directories <- function() {
+  if (!dir.exists("data")) {
+    dir.create("data")
+  }
+  if (!dir.exists("results")) {
+    dir.create("results")
+  }
 }
-
-plot_results <- function(data, params, size) {
-  SEIcols <- RColorBrewer::brewer.pal(11, "Spectral")[c(1,2,4,5,8,9,10)]
+run_simulation <- function(size, parameters, type = "c") {
+  setwd(parameters$pth)
+  models_res <- vector(mode = "list", length = 3)
   
-  ggplot(data) +
-    geom_line(aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
-    scale_color_manual(values = SEIcols) +
-    scale_y_continuous(limits = c(0, NA)) +
-    scale_x_continuous(breaks = seq(0, params$years * 12, 12), limits = c(0, params$years * 12))
-}
-
-main <- function() {
-  params <- initialize_simulation("test_", "seeded", 3, c(10, 50, 100, 250, 500), 0.02, 0.05)
-  cl <- setup_parallel()
+  pars <- parameter_set_wl(
+    k = size, 
+    scenario = parameters$infType, 
+    initial_exposed = parameters$pct * size, 
+    SS_prop = parameters$prop_superSpreader,
+    start_quarter = parameters$seedQuarter, 
+    test = parameters$test_mode,
+    birth = parameters$test_birth,
+    death_h = parameters$test_death_h,
+    death_n = parameters$test_death_n,
+    disease = parameters$test_disease,
+    verbose = parameters$verbose
+  )
   
-  foreach(size = params$sizes, .packages = c("deSolve", "tidyverse", "ggplot2")) %dopar% {
-    data <- run_model(params, size)
-    plot_results(data, params, size)
-    if (params$save_runs) save(data, file = paste0('test_runs/', params$name_out, size, '-', Sys.Date(), '.RData'))
+  X0_full <- c(S = as.integer(pars["S_0"]), E = as.integer(pars["E1_0"]), I = as.integer(pars["I_0"]), 
+               sS = as.integer(pars["SuperS_0"]), sE = as.integer(pars["SuperE1_0"]), sI = as.integer(pars["SuperI_0"]))
+  
+  tic <- Sys.time()
+  out <- ode(func = SEI_model_full, y = X0_full, times = parameters$times, parms = pars, method = "rk4") %>%
+    as.data.frame()
+  toc <- Sys.time()
+  print(toc - tic)
+  
+  out$N <- out$S + out$E + out$I + out$sS + out$sE + out$sI
+  data <- out %>% gather(variable, value, -time)
+  data$value[is.nan(data$value)] <- 0 
+  data$value[which(data$value < 0)] <- 0
+  
+  initial_state <- data.frame(S_0 = pars["S_0"], E1_0 = pars["E1_0"], I_0 = pars["I_0"], SuperS_0 = pars["SuperS_0"], SuperE1_0 = pars["SuperE1_0"], SuperI_0 = pars["SuperI_0"])
+  population_parameters <- data.frame(K = pars["K"], eta_hunt = pars["eta_hunt"], eta_nat = pars["eta_nat"], theta = pars["theta"], gamma = pars["gamma"], alpha_max = pars["alpha_max"], ksi = pars["ksi"], omega = pars["omega"], s = pars["s"], alpha = pars["alpha"]) 
+  disease_parameters <- data.frame(beta = pars["beta"], area = pars["area"], p1 = pars["p1"], p2_q1 = pars["p2_q1"], p2_q2 = pars["p2_q2"], p2_q3 = pars["p2_q3"], p2_q4 = pars["p2_q4"], phi = pars["phi"], sigma1_mean = pars["sigma1_mean"], sigma1_rate = pars["sigma1_rate"])
+  
+  param_vals <- data.frame(merge(population_parameters, disease_parameters))
+  
+  if (type %in% c('discrete','Discrete', 'D', 'd')) {
+    #get lambda
+    tic = Sys.time()
+    sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = 5, seed_quarter = as.integer(pars["start_q"]), parameters$verbose, batch_name = "test", type = 'c')
+    toc = Sys.time()
+    print(toc-tic)
+    lambda_out <- getLambda_vec(data = sto_out, type = 'max')
+    remove(sto_out)
+    
+    #run
+    tic = Sys.time()
+    sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), verbose = parameters$verbose, batch_name = "test", type = type, lambda = lambda_out*parameters$lambda_factor, integrate_type = parameters$type_of_integral)
+    toc = Sys.time()
+    print(toc-tic)
+    data_sto <- sto_out[,c("rep", "tstep", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
+  } else {
+    tic <- Sys.time()
+    sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), verbose = parameters$verbose, batch_name = "test", type = type)
+    toc <- Sys.time()
+    print(toc - tic)
+    data_sto <- sto_out[, c("rep", "tstep", "time", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
   }
   
-  stopCluster(cl)
+  models_res[[1]] <- as.data.frame(data)
+  models_res[[2]] <- as.data.frame(sto_out)
+  models_res[[3]] <- as.data.frame(data_sto)
+  
+  models_res
+}
+# run_simulation <- function(size, parameters) {
+#   setwd(parameters$pth)
+#   models_res <- vector(mode = "list", length = 3)
+#   
+#   pars <- parameter_set_wl(
+#     k = size, 
+#     scenario = parameters$infType, 
+#     initial_exposed = parameters$pct * size, 
+#     SS_prop = parameters$prop_superSpreader,
+#     start_quarter = parameters$seedQuarter, 
+#     test = parameters$test_mode,
+#     birth = parameters$test_birth,
+#     death_h = parameters$test_death_h,
+#     death_n = parameters$test_death_n,
+#     disease = parameters$test_disease,
+#     verbose = parameters$verbose
+#   )
+#   
+#   X0_full <- c(S = as.integer(pars["S_0"]), E = as.integer(pars["E1_0"]), I = as.integer(pars["I_0"]), 
+#                sS = as.integer(pars["SuperS_0"]), sE = as.integer(pars["SuperE1_0"]), sI = as.integer(pars["SuperI_0"]))
+#   
+#   tic <- Sys.time()
+#   out <- ode(func = SEI_model_full, y = X0_full, times = parameters$times, parms = pars, method = "rk4") %>%
+#     as.data.frame()
+#   toc <- Sys.time()
+#   print(toc - tic)
+#   
+#   out$N <- out$S + out$E + out$I + out$sS + out$sE + out$sI
+#   data <- out %>% gather(variable, value, -time)
+#   data$value[is.nan(data$value)] <- 0 
+#   data$value[which(data$value < 0)] <- 0
+#   
+#   initial_state <- data.frame(S_0 = pars["S_0"], E1_0 = pars["E1_0"], I_0 = pars["I_0"], SuperS_0 = pars["SuperS_0"], SuperE1_0 = pars["SuperE1_0"], SuperI_0 = pars["SuperI_0"])
+#   population_parameters <- data.frame(K = pars["K"], eta_hunt = pars["eta_hunt"], eta_nat = pars["eta_nat"], theta = pars["theta"], gamma = pars["gamma"], alpha_max = pars["alpha_max"], ksi = pars["ksi"], omega = pars["omega"], s = pars["s"], alpha = pars["alpha"]) 
+#   disease_parameters <- data.frame(beta = pars["beta"], area = pars["area"], p1 = pars["p1"], p2_q1 = pars["p2_q1"], p2_q2 = pars["p2_q2"], p2_q3 = pars["p2_q3"], p2_q4 = pars["p2_q4"], phi = pars["phi"], sigma1_mean = pars["sigma1_mean"], sigma1_rate = pars["sigma1_rate"])
+#   
+#   param_vals <- data.frame(merge(population_parameters, disease_parameters))
+#   
+#   tic <- Sys.time()
+#   sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), verbose = parameters$verbose, batch_name = "test", type = 'c')
+#   toc <- Sys.time()
+#   print(toc - tic)
+#   data_sto <- sto_out[, c("rep", "tstep", "time", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
+#   
+#   models_res[[1]] <- as.data.frame(data)
+#   models_res[[2]] <- as.data.frame(sto_out)
+#   models_res[[3]] <- as.data.frame(data_sto)
+#   
+#   models_res
+# }
+
+generate_plots <- function(models_res, parameters, size, type, scaled) {
+  
+  if (type %in% c('discrete','Discrete', 'D', 'd')) {
+    #class comparison plots
+    sto_by_class <- split(as.data.frame(models_res[[3]]), as.data.frame(models_res[[3]])$variable)
+    det_by_class <- split(as.data.frame(models_res[[1]]), as.data.frame(models_res[[1]])$variable)
+
+    SEIcols <- RColorBrewer::brewer.pal(11,"Spectral")[c(1,2,4,5,8,9,10)]
+
+    #susceptible
+    sto_by_class[['S']]$value <- sto_by_class[["S"]]$value
+    det_by_class[['S']]$value <- det_by_class[["S"]]$value
+
+    #susceptible SS
+    sto_by_class[['SS_S']]$value <- sto_by_class[["SS_S"]]$value
+    det_by_class[['sS']]$valu <- det_by_class[['sS']]$value
+
+    #exposed -- merged SS
+    sto_by_class[['E1']]$value <- sto_by_class[["E1"]]$value + sto_by_class[["SS_E1"]]$value
+    det_by_class[['E']]$value <- det_by_class[["E"]]$value + det_by_class[["sE"]]$value
+
+    #infected -- merged SS
+    sto_by_class[['I']]$value <- sto_by_class[["I"]]$value + sto_by_class[["SS_I"]]$value
+    det_by_class[['I']]$value <- det_by_class[["I"]]$value + det_by_class[["sI"]]$value
+
+
+    Nplot <- ggplot() +
+      geom_line(data = sto_by_class[["N"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .9) +
+      geom_line(data = det_by_class[["N"]], aes(x = time, y=value), size = 1) +
+      scale_color_manual(values=SEIcols[7]) +
+      scale_y_continuous(limits = c(0,NA)) +
+      scale_x_continuous(breaks=seq(0,years*12,1), limits = c(0, years*12))
+
+    Splot <- ggplot() +
+      geom_line(data = sto_by_class[["S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
+      geom_line(data = det_by_class[["S"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+      scale_color_manual(values=SEIcols[6]) +
+      theme(text = element_text(size = 16)) +
+      scale_y_continuous(name = 'Susceptible' ,limits = c(0,NA)) +
+      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+    Eplot <- ggplot() +
+      geom_line(data = sto_by_class[["E1"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
+      geom_line(data = det_by_class[["E"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+      scale_color_manual(values=SEIcols[4]) +
+      theme(text = element_text(size = 16)) +
+      scale_y_continuous(name = 'Exposed' ,limits = c(0,NA)) +
+      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+    Iplot <- ggplot() +
+      geom_line(data = sto_by_class[["I"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
+      geom_line(data = det_by_class[["I"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+      scale_color_manual(values=SEIcols[2]) +
+      theme(text = element_text(size = 16)) +
+      scale_y_continuous(name = 'Infectious' ,limits = c(0,NA)) +
+      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+    SSSplot <- ggplot() +
+      geom_line(data = sto_by_class[["SS_S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .6, show.legend = FALSE) +
+      geom_line(data = det_by_class[["sS"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+      scale_color_manual(values=SEIcols[5]) +
+      theme(text = element_text(size = 16)) +
+      scale_y_continuous(name = expression('Susceptible'['SS']) ,limits = c(0,NA)) +
+      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+
+    print(ggarrange(Splot, Eplot,  Iplot, SSSplot, ncol=3, nrow=2))
+    print(Nplot)
+
+    if(scaled){
+      #Proportion susceptible
+      sto_by_class[['S']]$value <- sto_by_class[["S"]]$value/sto_by_class[["N"]]$value
+      det_by_class[['S']]$value <- det_by_class[["S"]]$value/det_by_class[["N"]]$value
+
+      #Proportion susceptible SS
+      sto_by_class[['SS_S']]$value <- sto_by_class[["SS_S"]]$value/sto_by_class[["N"]]$value
+      det_by_class[['sS']]$value <- det_by_class[['sS']]$value/det_by_class[["N"]]$value
+
+
+      #Proportion exposed -- merged SS
+      sto_by_class[['E1']]$value <- sto_by_class[["E1"]]$value/sto_by_class[["N"]]$value
+      det_by_class[['E']]$value <- det_by_class[["E"]]$value/det_by_class[["N"]]$value
+
+      #Proportion infected -- merged SS
+      sto_by_class[['I']]$value <- sto_by_class[["I"]]$value/sto_by_class[["N"]]$value
+      det_by_class[['I']]$value <- det_by_class[["I"]]$value/det_by_class[["N"]]$value
+
+      Splot_scl <- ggplot() +
+        geom_line(data = sto_by_class[["S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
+        geom_line(data = det_by_class[["S"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+        scale_color_manual(values=SEIcols[6]) +
+        theme(text = element_text(size = 16)) +
+        scale_y_continuous(name = 'Proportion S' ,limits = c(0,NA)) +
+        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+      Eplot_scl <- ggplot() +
+        geom_line(data = sto_by_class[["E1"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
+        geom_line(data = det_by_class[["E"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+        scale_color_manual(values=SEIcols[4]) +
+        theme(text = element_text(size = 16)) +
+        scale_y_continuous(name = 'Proportion E1' ,limits = c(0,NA)) +
+        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+      Iplot_scl <- ggplot() +
+        geom_line(data = sto_by_class[["I"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
+        geom_line(data = det_by_class[["I"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+        scale_color_manual(values=SEIcols[2]) +
+        theme(text = element_text(size = 16)) +
+        scale_y_continuous(name = 'Proportion I' ,limits = c(0,NA)) +
+        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+
+      SSSplot_scl <- ggplot() +
+        geom_line(data = sto_by_class[["SS_S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .6, show.legend = FALSE) +
+        geom_line(data = det_by_class[["sS"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
+        scale_color_manual(values=SEIcols[5]) +
+        theme(text = element_text(size = 16)) +
+        scale_y_continuous(name = expression('Proportion S'['SS']) ,limits = c(0,NA)) +
+        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+    }
+    
+    if(parameters$save_plots){
+      setwd("results")
+
+      plot <- ggarrange(Splot, Eplot,  Iplot, SSSplot, ncol=3, nrow=2)
+      plot_scl <- ggarrange(Splot_scl, Eplot_scl,  Iplot_scl, SSSplot_scl, ncol=3, nrow=2)
+
+      plot <- annotate_figure(plot, top = text_grob("Discrete time stochastic model outbreak trajectories",
+                                                    color = "black", face = "bold", size = 18))
+      plot_scl <- annotate_figure(plot_scl, top = text_grob("Discrete time stochastic model outbreak trajectories",
+                                                            color = "black", face = "bold", size = 18))
+
+      jpeg(filename = paste0("disc_Rplot_class_",  parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      print(plot)
+      dev.off()
+
+      jpeg(filename = paste0("disc_Rplot_class_scl_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      print(plot_scl)
+      dev.off()
+
+      setwd(parameters$pth)
+    }
+  } else {
+    sto_by_class <- split(as.data.frame(models_res[[3]]), as.data.frame(models_res[[3]])$variable)
+    det_by_class <- split(as.data.frame(models_res[[1]]), as.data.frame(models_res[[1]])$variable)
+
+    SEIcols <- RColorBrewer::brewer.pal(11, "Spectral")[c(1, 2, 4, 5, 8, 9, 10)]
+
+    Nplot <- ggplot() +
+      geom_line(data = sto_by_class[["N"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .9) +
+      geom_line(data = det_by_class[["N"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[7]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    Splot <- ggplot() +
+      geom_line(data = sto_by_class[["S"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
+      geom_line(data = det_by_class[["S"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[6]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    Eplot <- ggplot() +
+      geom_line(data = sto_by_class[["E1"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
+      geom_line(data = det_by_class[["E"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[4]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    Iplot <- ggplot() +
+      geom_line(data = sto_by_class[["I"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
+      geom_line(data = det_by_class[["I"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[2]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    SSSplot <- ggplot() +
+      geom_line(data = sto_by_class[["SS_S"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .6) +
+      geom_line(data = det_by_class[["sS"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[5]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    ESSplot <- ggplot() +
+      geom_line(data = sto_by_class[["SS_E1"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .6) +
+      geom_line(data = det_by_class[["sE"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[3]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    ISSplot <- ggplot() +
+      geom_line(data = sto_by_class[["SS_I"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .6) +
+      geom_line(data = det_by_class[["sI"]], aes(x = time, y = value), size = 1) +
+      scale_color_manual(values = SEIcols[1]) +
+      scale_y_continuous(limits = c(0, NA)) +
+      scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
+
+    print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol = 2, nrow = 3))
+    print(Nplot)
+
+    if (parameters$save_plots) {
+      setwd("results")
+
+      jpeg(filename = paste0("cont_Rplot_class_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol = 2, nrow = 3))
+      dev.off()
+
+      jpeg(filename = paste0("cont_Rplot_N_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      print(Nplot)
+      dev.off()
+
+      setwd(parameters$pth)
+    }
+  }
+  
+  # list(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, Nplot)
+}
+
+save_results <- function(models_res, parameters, size) {
+  if (parameters$save_runs) {
+    save(models_res, file = paste0('data/', parameters$name_out, size, '-', Sys.Date(), '.RData'))
+  }
 }
