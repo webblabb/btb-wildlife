@@ -762,216 +762,217 @@ generate_plots <- function(models_res, parameters, size, type, scaled) {
     #class comparison plots
     sto_by_class <- split(as.data.frame(models_res[[3]]), as.data.frame(models_res[[3]])$variable)
     det_by_class <- split(as.data.frame(models_res[[1]]), as.data.frame(models_res[[1]])$variable)
-
+    
     SEIcols <- RColorBrewer::brewer.pal(11,"Spectral")[c(1,2,4,5,8,9,10)]
-
+    
     #susceptible
     sto_by_class[['S']]$value <- sto_by_class[["S"]]$value
     det_by_class[['S']]$value <- det_by_class[["S"]]$value
-
+    
     #susceptible SS
     sto_by_class[['SS_S']]$value <- sto_by_class[["SS_S"]]$value
     det_by_class[['sS']]$valu <- det_by_class[['sS']]$value
-
+    
     #exposed -- merged SS
     sto_by_class[['E1']]$value <- sto_by_class[["E1"]]$value + sto_by_class[["SS_E1"]]$value
     det_by_class[['E']]$value <- det_by_class[["E"]]$value + det_by_class[["sE"]]$value
-
+    
     #infected -- merged SS
     sto_by_class[['I']]$value <- sto_by_class[["I"]]$value + sto_by_class[["SS_I"]]$value
     det_by_class[['I']]$value <- det_by_class[["I"]]$value + det_by_class[["sI"]]$value
-
-
+    
+    
     Nplot <- ggplot() +
       geom_line(data = sto_by_class[["N"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .9) +
       geom_line(data = det_by_class[["N"]], aes(x = time, y=value), size = 1) +
       scale_color_manual(values=SEIcols[7]) +
       scale_y_continuous(limits = c(0,NA)) +
-      scale_x_continuous(breaks=seq(0,years*12,1), limits = c(0, years*12))
-
+      scale_x_continuous(breaks=seq(0, parameters$years*12,1), limits = c(0, parameters$years*12))
+    
     Splot <- ggplot() +
       geom_line(data = sto_by_class[["S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
       geom_line(data = det_by_class[["S"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
       scale_color_manual(values=SEIcols[6]) +
       theme(text = element_text(size = 16)) +
       scale_y_continuous(name = 'Susceptible' ,limits = c(0,NA)) +
-      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
+      scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+    
     Eplot <- ggplot() +
       geom_line(data = sto_by_class[["E1"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
       geom_line(data = det_by_class[["E"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
       scale_color_manual(values=SEIcols[4]) +
       theme(text = element_text(size = 16)) +
       scale_y_continuous(name = 'Exposed' ,limits = c(0,NA)) +
-      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
+      scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+    
     Iplot <- ggplot() +
       geom_line(data = sto_by_class[["I"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
       geom_line(data = det_by_class[["I"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
       scale_color_manual(values=SEIcols[2]) +
       theme(text = element_text(size = 16)) +
       scale_y_continuous(name = 'Infectious' ,limits = c(0,NA)) +
-      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
+      scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+    
     SSSplot <- ggplot() +
       geom_line(data = sto_by_class[["SS_S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .6, show.legend = FALSE) +
       geom_line(data = det_by_class[["sS"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
       scale_color_manual(values=SEIcols[5]) +
       theme(text = element_text(size = 16)) +
       scale_y_continuous(name = expression('Susceptible'['SS']) ,limits = c(0,NA)) +
-      scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
-
+      scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+    
+    
     print(ggarrange(Splot, Eplot,  Iplot, SSSplot, ncol=3, nrow=2))
     print(Nplot)
-
+    
     if(scaled){
       #Proportion susceptible
       sto_by_class[['S']]$value <- sto_by_class[["S"]]$value/sto_by_class[["N"]]$value
       det_by_class[['S']]$value <- det_by_class[["S"]]$value/det_by_class[["N"]]$value
-
+      
       #Proportion susceptible SS
       sto_by_class[['SS_S']]$value <- sto_by_class[["SS_S"]]$value/sto_by_class[["N"]]$value
       det_by_class[['sS']]$value <- det_by_class[['sS']]$value/det_by_class[["N"]]$value
-
-
+      
+      
       #Proportion exposed -- merged SS
       sto_by_class[['E1']]$value <- sto_by_class[["E1"]]$value/sto_by_class[["N"]]$value
       det_by_class[['E']]$value <- det_by_class[["E"]]$value/det_by_class[["N"]]$value
-
+      
       #Proportion infected -- merged SS
       sto_by_class[['I']]$value <- sto_by_class[["I"]]$value/sto_by_class[["N"]]$value
       det_by_class[['I']]$value <- det_by_class[["I"]]$value/det_by_class[["N"]]$value
-
+      
       Splot_scl <- ggplot() +
         geom_line(data = sto_by_class[["S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
         geom_line(data = det_by_class[["S"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
         scale_color_manual(values=SEIcols[6]) +
         theme(text = element_text(size = 16)) +
         scale_y_continuous(name = 'Proportion S' ,limits = c(0,NA)) +
-        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
+        scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+      
       Eplot_scl <- ggplot() +
         geom_line(data = sto_by_class[["E1"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
         geom_line(data = det_by_class[["E"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
         scale_color_manual(values=SEIcols[4]) +
         theme(text = element_text(size = 16)) +
         scale_y_continuous(name = 'Proportion E1' ,limits = c(0,NA)) +
-        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
+        scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+      
       Iplot_scl <- ggplot() +
         geom_line(data = sto_by_class[["I"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .7, show.legend = FALSE) +
         geom_line(data = det_by_class[["I"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
         scale_color_manual(values=SEIcols[2]) +
         theme(text = element_text(size = 16)) +
         scale_y_continuous(name = 'Proportion I' ,limits = c(0,NA)) +
-        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
-
+        scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
+      
       SSSplot_scl <- ggplot() +
         geom_line(data = sto_by_class[["SS_S"]], aes(x = tstep, y=value, color=variable, group = rep), size = 1, alpha = .6, show.legend = FALSE) +
         geom_line(data = det_by_class[["sS"]], aes(x = time, y=value), size = 1, show.legend = FALSE) +
         scale_color_manual(values=SEIcols[5]) +
         theme(text = element_text(size = 16)) +
         scale_y_continuous(name = expression('Proportion S'['SS']) ,limits = c(0,NA)) +
-        scale_x_continuous(name = 'time (months)', breaks=seq(0,years*12,12), limits = c(0, years*12))
+        scale_x_continuous(name = 'time (months)', breaks=seq(0, parameters$years*12,12), limits = c(0, parameters$years*12))
     }
     
     if(parameters$save_plots){
       setwd("results")
-
+      
       plot <- ggarrange(Splot, Eplot,  Iplot, SSSplot, ncol=3, nrow=2)
       plot_scl <- ggarrange(Splot_scl, Eplot_scl,  Iplot_scl, SSSplot_scl, ncol=3, nrow=2)
-
+      
       plot <- annotate_figure(plot, top = text_grob("Discrete time stochastic model outbreak trajectories",
                                                     color = "black", face = "bold", size = 18))
       plot_scl <- annotate_figure(plot_scl, top = text_grob("Discrete time stochastic model outbreak trajectories",
                                                             color = "black", face = "bold", size = 18))
-
+      
       jpeg(filename = paste0("disc_Rplot_class_",  parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(plot)
       dev.off()
-
+      
       jpeg(filename = paste0("disc_Rplot_class_scl_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(plot_scl)
       dev.off()
-
+      
       setwd(parameters$pth)
     }
   } else {
     sto_by_class <- split(as.data.frame(models_res[[3]]), as.data.frame(models_res[[3]])$variable)
     det_by_class <- split(as.data.frame(models_res[[1]]), as.data.frame(models_res[[1]])$variable)
-
+    
     SEIcols <- RColorBrewer::brewer.pal(11, "Spectral")[c(1, 2, 4, 5, 8, 9, 10)]
-
+    
     Nplot <- ggplot() +
       geom_line(data = sto_by_class[["N"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .9) +
       geom_line(data = det_by_class[["N"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[7]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     Splot <- ggplot() +
       geom_line(data = sto_by_class[["S"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
       geom_line(data = det_by_class[["S"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[6]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     Eplot <- ggplot() +
       geom_line(data = sto_by_class[["E1"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
       geom_line(data = det_by_class[["E"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[4]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     Iplot <- ggplot() +
       geom_line(data = sto_by_class[["I"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .7) +
       geom_line(data = det_by_class[["I"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[2]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     SSSplot <- ggplot() +
       geom_line(data = sto_by_class[["SS_S"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .6) +
       geom_line(data = det_by_class[["sS"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[5]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     ESSplot <- ggplot() +
       geom_line(data = sto_by_class[["SS_E1"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .6) +
       geom_line(data = det_by_class[["sE"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[3]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     ISSplot <- ggplot() +
       geom_line(data = sto_by_class[["SS_I"]], aes(x = time, y = value, color = variable, group = rep), size = 1, alpha = .6) +
       geom_line(data = det_by_class[["sI"]], aes(x = time, y = value), size = 1) +
       scale_color_manual(values = SEIcols[1]) +
       scale_y_continuous(limits = c(0, NA)) +
       scale_x_continuous(breaks = seq(0, parameters$years * 12, 12), limits = c(0, parameters$years * 12))
-
+    
     print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol = 2, nrow = 3))
     print(Nplot)
-
+    
     if (parameters$save_plots) {
       setwd("results")
-
+      
       jpeg(filename = paste0("cont_Rplot_class_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol = 2, nrow = 3))
       dev.off()
-
+      
       jpeg(filename = paste0("cont_Rplot_N_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(Nplot)
       dev.off()
-
+      
       setwd(parameters$pth)
     }
   }
   
   # list(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, Nplot)
 }
+
 
 save_results <- function(models_res, parameters, size) {
   if (parameters$save_runs) {
