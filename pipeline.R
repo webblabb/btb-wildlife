@@ -34,3 +34,61 @@ run_pipeline(type = "c", years = 3, infType = "spillover", runtype = "stdLambda_
 run_pipeline(type = "d", years = 7, infType = "seeded", runtype = "stdD_pub_", pct = 0.02, 
              prop_superSpreader = 0.1, reps = 500, sizes = c(10, 50, 100, 250, 500, 750), pth = getwd(), 
              scaled_plots = T)
+
+# ===============
+# Fadeout runs
+# ================================
+rm(list = ls()) # Clear workspace for memory
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+source(file = "bTBwl_func.R")
+
+# Define simulation settings
+years <- 20
+sizes <- seq(from = 0, to = 750, length.out = 31)[-1]
+pct_seq <- seq(from = 0, to = 0.5, length.out = 21)
+infType <- "seeded"
+runtype <- "fade_"
+type_of_integral <- 3
+prop_superSpreader <- 0
+verbose <- 0
+reps <- 500
+lambda_factor <- 1.2
+pth <- getwd()
+save_plots <- FALSE
+
+# Set up parallel computing
+n.cores <- floor(detectCores() * (3/4))
+cl <- makeCluster(n.cores)
+registerDoParallel(cl)
+
+clusterEvalQ(cl, {
+  library(deSolve)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(grid)
+  library(rstudioapi)
+  library(foreach)
+  library(doParallel)
+  library(RColorBrewer)
+  library(scales)
+  source(file = "bTBwl_func.R")
+})
+
+# Run pipeline for each pct value
+results_list <- foreach(pct = pct_seq, .combine = 'cbind', .inorder = TRUE) %dopar% {
+  run_pipeline(
+    type = "d", 
+    years = years, 
+    infType = infType, 
+    runtype = runtype, 
+    pct = pct, 
+    prop_superSpreader = prop_superSpreader, 
+    reps = reps, 
+    sizes = sizes, 
+    pth = pth, 
+    scaled_plots = save_plots
+  )
+}
+
+stopCluster(cl)

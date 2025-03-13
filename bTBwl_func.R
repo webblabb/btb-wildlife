@@ -979,3 +979,34 @@ save_results <- function(models_res, parameters, size) {
     save(models_res, file = paste0('data/', parameters$name_out, size, '-', Sys.Date(), '.RData'))
   }
 }
+
+# run_pipeline <- function(type, years, infType, runtype, pct, prop_superSpreader, reps, sizes, pth, scaled_plots) {
+#   initialize_environment()
+#   parameters <- setup_parameters(years, infType, runtype, pct, prop_superSpreader, reps, sizes, pth)
+#   create_directories()
+#   cl <- initialize_cluster(parameters$n.cores)
+#   
+#   foreach(i = 1:length(parameters$sizes)) %dopar% {
+#     size <- as.integer(parameters$sizes[i])
+#     models_res <- run_simulation(size, parameters, type)
+#     plots <- generate_plots(models_res = models_res, parameters = parameters, 
+#                             size = size, type = type, scaled = scaled_plots)
+#     save_results(models_res, parameters, size)
+#   }
+#   
+#   stopCluster(cl)
+# }
+
+run_pipeline <- function(type, years, infType, runtype, pct, prop_superSpreader, reps, size, pth, scaled_plots, gen_plots = T, save_runs = T) {
+  parameters <- setup_parameters(years, infType, runtype, pct, prop_superSpreader, reps, size, pth)
+  models_res <- run_simulation(size, parameters, type)
+  if (gen_plots == T) {
+    plots <- generate_plots(models_res = models_res, parameters = parameters, size = size, type = type, scaled = scaled_plots)
+  }
+  
+  if (save_runs == T) {
+    save_results(models_res, parameters, size)
+  }
+  
+  return(models_res)
+}
