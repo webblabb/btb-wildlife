@@ -12,7 +12,7 @@ run_pipeline <- function(type, years, infType, runtype, pct, prop_superSpreader,
   foreach(i = 1:length(parameters$sizes)) %dopar% {
     size <- as.integer(parameters$sizes[i])
     models_res <- run_simulation(size, parameters, type)
-    plots <- generate_plots(model_res = models_res, parameters = parameters, 
+    plots <- generate_plots(models_res = models_res, parameters = parameters, 
                             size = size, type = type, scaled = scaled_plots)
     save_results(models_res, parameters, size)
   }
