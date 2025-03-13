@@ -56,24 +56,8 @@ lambda_factor <- 1.2
 pth <- getwd()
 save_plots <- FALSE
 
-# Set up parallel computing
-n.cores <- floor(detectCores() * (3/4))
-cl <- makeCluster(n.cores)
-registerDoParallel(cl)
-
-clusterEvalQ(cl, {
-  library(deSolve)
-  library(tidyverse)
-  library(ggplot2)
-  library(ggpubr)
-  library(grid)
-  library(rstudioapi)
-  library(foreach)
-  library(doParallel)
-  library(RColorBrewer)
-  library(scales)
-  source(file = "bTBwl_func.R")
-})
+initialize_environment()
+cl <- initialize_cluster()
 
 # Run pipeline for each pct value
 results_list <- foreach(pct = pct_seq, .combine = 'cbind', .inorder = TRUE) %dopar% {

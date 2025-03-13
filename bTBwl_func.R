@@ -887,11 +887,11 @@ generate_plots <- function(models_res, parameters, size, type, scaled) {
       plot_scl <- annotate_figure(plot_scl, top = text_grob("Discrete time stochastic model outbreak trajectories",
                                                             color = "black", face = "bold", size = 18))
       
-      jpeg(filename = paste0("disc_Rplot_class_",  parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      jpeg(filename = paste0("disc_class_",  parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(plot)
       dev.off()
       
-      jpeg(filename = paste0("disc_Rplot_class_scl_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      jpeg(filename = paste0("disc_class_scl_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(plot_scl)
       dev.off()
       
@@ -958,11 +958,11 @@ generate_plots <- function(models_res, parameters, size, type, scaled) {
     if (parameters$save_plots) {
       setwd("results")
       
-      jpeg(filename = paste0("cont_Rplot_class_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      jpeg(filename = paste0("cont_class_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol = 2, nrow = 3))
       dev.off()
       
-      jpeg(filename = paste0("cont_Rplot_N_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
+      jpeg(filename = paste0("cont_N_", parameters$name_out, size, '-', Sys.Date(), ".jpeg"))
       print(Nplot)
       dev.off()
       
