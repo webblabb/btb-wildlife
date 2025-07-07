@@ -1,0 +1,971 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Edit the title below to update the display in My Documents
+%\title{Project Report}
+%
+%%% Preamble
+%\documentclass[paper=a4, fontsize=11pt]{scrartcl}
+%\documentclass[letterpaper,12pt]{article}
+\documentclass[number,preprint,review,12pt]{elsarticle}
+\usepackage[T1]{fontenc}
+\usepackage{fourier}
+
+
+\usepackage{booktabs,graphicx,natbib,amssymb,lineno,amsmath,multirow,rotating,verbatim,setspace,float}
+\usepackage[margin=1in]{geometry}
+\usepackage[dvipsnames, table]{xcolor}
+\usepackage{ctable} % for \specialrule command
+\usepackage[english]{babel}
+\usepackage{subcaption}
+\usepackage{multicol,textcomp}
+\usepackage[normalem]{ulem}
+\usepackage{caption}
+\setcounter{tocdepth}{4}
+\setcounter{secnumdepth}{4}
+\usepackage{array, makecell}
+\usepackage{boldline}
+\usepackage{rotating}
+\usepackage{lineno}
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc}
+\usepackage{longtable}
+\usepackage{multirow}
+\definecolor{lightgray}{gray}{0.9}
+\usepackage{lineno}
+\usepackage{setspace}
+
+\usepackage[english]{babel}															% English language/hyphenation
+\usepackage[protrusion=true,expansion=true]{microtype}	
+\usepackage{amsmath,amsfonts,amsthm} % Math packages
+\usepackage{url}
+
+%%% Custom sectioning
+\usepackage{sectsty}
+\allsectionsfont{\centering \normalfont\scshape}
+
+%%%%% add captions to equations
+\newcounter{equationset}
+\newcommand{\equationset}[1]{% \equationset{<caption>}
+  \refstepcounter{equationset}% Step counter
+  \noindent\makebox[\linewidth]{\theequationse #1}}% Print caption
+
+
+%%% Custom headers/footers (fancyhdr package)
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\fancyhead{}											% No page header
+\fancyfoot[L]{}											% Empty 
+\fancyfoot[C]{}											% Empty
+\fancyfoot[R]{\thepage}									% Pagenumbering
+\renewcommand{\headrulewidth}{0pt}			% Remove header underlines
+\renewcommand{\footrulewidth}{0pt}				% Remove footer underlines
+\setlength{\headheight}{13.6pt}
+
+\newcommand{\bs}[1]{{\color{RoyalBlue} #1}}
+\newcommand{\lmbj}[1]{{\color{purple} #1}}
+\newcommand{\sts}[1]{{\color{orange} #1}}
+\newcommand{\ctw}[1]{{\color{ForestGreen} #1}}
+\newcommand{\snip}[1]{{\color{red} [snip]}} %text has been removed--put text you would like to cut in the curly brackets of the command \snip{}. Text will disappear and [snip] in red will show up.
+
+%\newcolumntype{L}{>{\raggedright\arraybackslash}m{3.5cm}}
+%\newcolumntype{S}{>{\raggedright\arraybackslash}m{1cm}}
+%\newcolumntype{M}{>{\raggedright\arraybackslash}m{2.3cm}}
+%\newcolumntype{T}{>{\raggedright\arraybackslash}m{1.0cm}}
+%{|M|T|T|T|T|T|T|S|L|}
+\newcolumntype{L}{>{\raggedright\arraybackslash}m{0.20\textwidth}}
+\newcolumntype{S}{>{\raggedright\arraybackslash}m{0.1\textwidth}}
+\newcolumntype{M}{>{\raggedright\arraybackslash}m{0.20\textwidth}}
+\newcolumntype{K}{>{\raggedright\arraybackslash}m{0.25\textwidth}}
+\newcolumntype{V}{>{\raggedright\arraybackslash}m{0.3\textwidth}}
+
+
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+
+\newcommand{\horrule}[1]{\rule{\linewidth}{#1}} 	% Horizontal rule
+
+% \title{
+% 		\huge Stochastic modeling of bovine tuberculosis dynamics in white-tailed deer \\
+% 		\horrule{2pt} \\[0.5cm]
+% }
+% \author{
+% 		Brandon J. Simony$^{a,1}$, Ryan S. Miller$^{b}$, Lindsay M. Beck-Johnson$^{a,\ast}$, \\Samuel M. Smith$^{a,b}$, and Colleen T. Webb$^{a}$\\ 
+% 	\normalsize{$^{a}$Department of Biology, Colorado State University,}\\
+% 		\normalsize{$^{b}$USDA, APHIS,
+% 		Veterinary Services, Center for Epidemiology and Animal Health,}\\
+% 		\normalsize{$^\ast$Corresponding Author: E-mail: l.beck-johnson@colostate.edu.}\\
+% 		\normalsize{Mailing Address: Department of Biology, Colorado State University,} \\ \normalsize{1878 Campus Delivery, Fort Collins, CO 80523, US}\\
+%         %\normalsize{Phone: +1(719) 289-2974}
+% }
+
+\journal{Research in Veterinary Science}
+\begin{document}
+\linenumbers
+
+\begin{frontmatter}
+\title{Stochastic modeling of bovine tuberculosis dynamics in white-tailed deer}
+
+\author[1,4]{Brandon J. Simony}
+\author[2]{Ryan S. Miller} 
+\author[1]{Lindsay M. Beck-Johnson\corref{cor1}}
+\ead{l.beck-johnson@colostate.edu}
+\author[1,fn2]{Samuel M. Smith}
+\author[1]{Colleen T. Webb}
+
+\address[1]{Department of Biology, Colorado State University}
+\address[2]{USDA APHIS Veterinary Services, Center for Epidemiology and Animal Health}
+\cortext[cor1]{Corresponding Author}
+\fntext[fn1]{Present address: Center for Infectious Disease Dynamics, Pennsylvania State University, State College, Pennsylvania, United States of America}
+\fntext[fn2]{Present address: USDA APHIS Veterinary Services, Center for Epidemiology and Animal Health}
+
+    %\begin{abstract}
+        % \textit{Mycobacterium bovis}, the causative agent of the disease bovine tuberculosis (bTB), poses potential economic threats to the cattle industry.  Although currently prevalent at low levels in cattle herds in the United States, the presence of the pathogen in wildlife reservoirs provides the seed for continued outbreaks in livestock. The northern lower peninsula of Michigan is a known habitat for the white-tailed deer (\textit{Odocoileus virginianus}), which have been observed to serve as a reservoir host for \textit{M. bovis} in this region. It is suspected that this reservoir was established by spillover from livestock into wildlife populations, and it has since contributed to repeated spillback into livestock, hindering eradication of the disease in the United States. 
+        
+        % Here, we use a stochastic simulation to predict bTB dynamics within a wildlife population to illustrate the mechanistic drivers of bTB outbreaks and disease prevalence in wildlife populations. We account for seasonal variation in deer populations with a seasonal birth pulse and mortality due to hunter-harvest. Heterogeneity in behavior and immunology across individuals is also considered, as increased farm contact can result in increased infection risk and individual level variation in immune function can significantly affect the progression of a bTB infection.
+        
+        % We find that the probability of developing an endemic disease state depends on the number of infected animals rather than the size of the herd. Fadeout of bTB infections appears to be unlikely overall. We find that outbreaks that do fade out are likely driven by stochastic effects, as fade out was only observed in simulations where the outbreak failed to take off. It is also apparent that increased farm contact does not contribute to larger outbreaks in wildlife, but it may still have implications in spillback of the disease into livestock populations. Assuming perfect diagnostics and hunter compliance, we also find that prevalence estimates using postmortem diagnostics on hunter-harvested animals provides a systematic underestimate of true prevalence, especially when disease prevalence is low within the population. 
+        
+        % Preventive measures to reduce spillover events should be implemented given the low probability of fadeout in wildlife. Physical boundaries such as increased fencing and covered storage of feed and water troughs may reduce transmission potential via livestock-wildlife contact, possibly lowering bTB prevalence in both species. Although prevalence estimates from hunter harvest may be imperfect, change between years could be used as a tool to identify outbreaks or evaluate intervention effectiveness.
+    %\end{abstract}
+
+    %\begin{keyword}
+        % modelling, bovine tuberculosis, white-tailed deer, stochastic process
+    %\end{keyword}
+
+\end{frontmatter}
+
+%\maketitle
+\pagebreak
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Abstract}
+\doublespacing
+\textit{Mycobacterium bovis}, the causative agent of the disease bovine tuberculosis (bTB), poses potential economic threats to the cattle industry.  Although currently prevalent at low levels in cattle herds in the United States, the presence of the pathogen in wildlife reservoirs provides the seed for continued outbreaks in livestock. The northern lower peninsula of Michigan is a known habitat for the white-tailed deer (\textit{Odocoileus virginianus}), which have been observed to serve as a reservoir host for \textit{M. bovis} in this region. It is suspected that this reservoir was established by spillover from livestock into wildlife populations, and it has since contributed to repeated spillback into livestock, hindering eradication of the disease in the United States. 
+
+Here, we use a stochastic simulation to predict bTB dynamics within a wildlife population to illustrate the mechanistic drivers of bTB outbreaks and disease prevalence in wildlife populations. We account for seasonal variation in deer populations with a seasonal birth pulse and mortality due to hunter-harvest. Heterogeneity in behavior and immunology across individuals is also considered, as increased farm contact can result in increased infection risk and individual level variation in immune function can significantly affect the progression of a bTB infection.
+
+We find that the probability of developing an endemic disease state depends on the number of infected animals rather than the size of the herd. Fadeout of bTB infections appears to be unlikely overall. We find that outbreaks that do fade out are likely driven by stochastic effects, as fade out was only observed in simulations where the outbreak failed to take off. It is also apparent that increased farm contact does not contribute to larger outbreaks in wildlife, but it may still have implications in spillback of the disease into livestock populations. Assuming perfect diagnostics and hunter compliance, we also find that prevalence estimates using postmortem diagnostics on hunter-harvested animals provides a systematic underestimate of true prevalence, especially when disease prevalence is low within the population. 
+
+Preventive measures to reduce spillover events should be implemented given the low probability of fadeout in wildlife. Physical boundaries such as increased fencing and covered storage of feed and water troughs may reduce transmission potential via livestock-wildlife contact, possibly lowering bTB prevalence in both species. Although prevalence estimates from hunter harvest may be imperfect, change between years could be used as a tool to identify outbreaks or evaluate intervention effectiveness.
+
+\section{Keywords}
+\doublespacing
+Keywords: modelling, bovine tuberculosis, white-tailed deer, stochastic process
+
+\pagebreak
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Introduction}
+Bovine tuberculosis, caused by the etiological agent \textit{Mycobacterium bovis}, continues to persist as a concern for livestock management in cattle. While livestock management regimes in higher income countries have reduced the national level prevalence, eradication of the disease remains elusive. While the absences of a gold standard ante mortem diagnostic tool or widely used vaccine are certainly problematic in the management of the disease, presence of the pathogen in wildlife reservoirs creates a much greater problem in management. This issue exists globally across several unique systems and reservoir species - Eurasian badgers (\textit{Meles meles}) in the U.K., brustail oppossums (\textit{Trichosurus vulpecula}) in New Zealand, and white-tailed deer (\textit{Odocoileus virginianus}) in the U.S. 
+
+Bovine tuberculosis (bTB) is still present in some U.S. cattle herds, with a national level prevalence of approximately 0.0003$\%$, and prevalence differs by animal husbandry practice (either beef or dairy)\citep{USDA2009}.  Michigan is currently the only state that is not bTB accredited-free in the US; it has been observed that \textit{M. bovis} is present within wildlife reservoirs in Michigan, which are suspected causes of small regional outbreaks within cattle herds \citep{miller2013}. Previous findings suggest that white-tailed deer are a primary wildlife reservoir, but other wildlife species, such as raccoon and opossums, also have been observed to serve as reservoir species for bTB \citep{Lavelle2016}. However, studies on the population level basic reproductive number $R_0$ for bTB revealed that deer are the most important hosts, while other wildlife species are necessary to maintain an $R_0$ greater than one \citep{Wilber2019}. While we might then expect wildlife infections to eventually die out in the absence of these other wildlife hosts, this does not seem to be the case, as bTB infections have been detected in various wildlife populations across several states, including Michigan, Minnesota, Montana, New York, and Hawaii \citep{miller2013}.
+
+This endemic behavior observed in Michigan seems to suggest that there may be another source contributing to the persistence of bTB in wildlife populations, and we suspect that the source may be from undetected but infectious cattle herds. This may be reasonable despite higher regulation and testing on cattle farms due to largely imperfect ante-mortem diagnostics for bTB within cattle, allowing the possibility for an infectious individual to remain on a premises for some time before being detected and removed. Over this infectious period before removal, infectious cattle may shed bacteria through feces, and also contaminate water and food sources due to direct contact with these materials. It has been observed that \textit{M. bovis} can persist on such surfaces for several months, making these objects a hazard for infection among cattle as well as visiting deer \citep{allen2021does}. Although direct contact with infectious cattle can lead to infection, this route of transmission is generally rare due to overall low prevalence before detection, and it has also been observed that cattle-wildlife contacts are relatively infrequent \citep{Lavelle2016}.  As a result, it is suspected that fomite contact is the primary source of infection spillover into wildlife from livestock.
+
+\citet{Berentsen2014} found that heterogeneity within wildlife populations seemed to play a significant role in the frequency of these contacts, as a small number of deer contributed disproportionately to the number of wildlife-farm contacts. Based on our suspicion of spillover of bTB from cattle to wildlife as a driver of the persistence of bTB within wildlife populations, these individuals that visit farms more frequently might play a significant role in population level disease persistence. If there is a nearby farm that is infectious with bTB, these frequent visitors could serve as `super susceptibles' to the wildlife population because of their increased likelihood of infection. This may be another alternative explanation to maintaining a population level $R_0$ greater than one, as these `super susceptible' individuals would have a higher individual level $R_0$, which may disproportionately drive the population $R_0$ such that endemicity may be possible. Furthermore, these individuals may also pose a significant risk for spill back into susceptible cattle herds if there is infection present within the wildlife. For both reasons, these frequent visitors may play a significant role in the dynamics of bTB within wildlife populations as super susceptibles, but also to cattle within-herd dynamics. 
+
+Unlike on cattle farms, where the population is highly managed and surveillance is feasible at a population level, exact wildlife population prevalence is not readily available, and the same level of disease surveillance is fiscally infeasible. As such, direct disease management for bTB in wildlife is not economically feasible, so mathematical models are a useful tool in predicting the disease dynamics of bTB within a wildlife population. By implementing a model that explicitly models mortality via hunter harvest within a stochastic modeling framework \citet{SANDMANN}, we are able to explore the relative effectiveness of current surveillance measures and evaluate new possible surveillance measures. In doing so we can understand the possible shortcomings of present surveillance practices to inform better future management strategies. Our framework also considers heterogeneity in farm contact rates of a small portion of the population, as we would like to consider the importance of these individuals on wildlife disease dynamics as well as potential risk factors for livestock. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Methods}
+\doublespacing
+\subsection{System Description}
+\doublespacing
+We present a mathematical model informed by previous field studies of deer demography and behavior to model herd level population dynamics of white-tailed deer. We incorporated seasonal variation in population dynamics and animal behavior such as an annual birth pulse, competitive interactions, variation in farm visitation rates, and hunter harvest. We did not assume a specific age or sex structure, so all individuals are effectively identical in terms of mortality risk and reproductive capability. All newborn individuals are presumed to be susceptible, so potential for vertical transmission is ignored. Since all individuals were treated identically, mortality risks are independent of the disease state. The exact route of mortality was considered, specifically hunter harvest, as examination of harvested individuals is frequently used to estimate disease prevalence in wildlife populations.
+
+To model the dynamics of bTB within a wildlife population, we used a Susceptible - Exposed - Infectious (SEI) model framework to express the potentially long latent period characteristic of a bTB infection. \citep{brooks-pollock} We further divided the susceptible class into regular individuals and 'super susceptibles'. The only difference between these two classes is that the 'super susceptible' individuals had a higher farm contact rate and are thus more likely to become infected when a nearby farm is infectious.
+
+When determining transmission, we used an assumption of density dependent transmission. Although bTB likely follows more frequency dependent transmission patterns, well connected contact structures make heterogeneous populations appear homogeneous so the decision between frequency or density dependent transmission patterns matter less on such networks \citep{begon}.  
+
+\subsection{Model Structure}
+\doublespacing
+The rate of transition between the model classes by each event type was described with a deterministic ordinary differential equation model. The solution of this ODE system (described further in section 3.5) was obtained using a $4^{th}$ order Runge-Kutta solver, from the deSolve package in R \citep{deSolve}. While these deterministic trajectories do provide reasonable insights to the dynamics of the system on average, deterministic models fail to capture the stochasticity inherent of natural systems. A Gillespie algorithm approach was used to express the ODE trajectory within a stochastic simulation in continuous time. One shortcoming of such algorithms is that the computation time is largely dependent on the size of the population, and generating many replicates of such large simulations can become prohibitive in terms of run time and computer memory despite the code being written in C++. To alleviate this issue, we implemented a stochastically exact approximation of the model in discrete time, using the methods proposed in \citet{SANDMANN}. We adopt a monthly time step structure, as this gives a temporal scale that sufficiently captures the generally slow disease progression of bTB as well as any population dynamic characteristics. 
+
+For this discrete time model, the continuous time model is still necessary for running pre-simulations to determine upper bounds on the sum of all event rates. To reduce computation time even further, we took the maximum rate for each month individually. Since this is a Markov chain process, each time step is independent, so the events that occur within a given time step depend only on the event rates and the population at the beginning of the time step. For each of these pre-simulations, the model was run 500 times for five years, as this was found to be a sufficient time to capture the model behavior.  
+
+\subsection{Population Dynamics}\label{popDySec}
+\doublespacing
+To express the seasonal pattern of births in white-tailed deer populations, we use a Gaussian birth pulse function (shown in eqn. \ref{BR}), as previous work suggests that this functional form provides more realistic patterns in birth dynamics \citep{webb2014}. This functional form allows for annual periodicity, giving values close to zero except for a short duration determined by the synchrony parameter $s$ and timing determined by $\omega$. 
+
+\begin{equation}
+    \alpha(t) = A\cdot e^{-s\cdot cos^2\left(\pi\cdot\frac{t-\omega}{12}\right)}
+    \label{BR}
+\end{equation}
+
+There is a distinct seasonal pattern in terms of breeding behaviors and seasonal regulation by hunter harvest in addition to natural sources of mortality. While the timing of the birth pulse may vary by geographic location, white-tailed deer have a very distinct fawning season that occurs over the final weeks of May and extends into June. We used the phase shift parameter $\omega$ to reflect the peak of the birth pulse while the synchrony parameter $s$ reflects the duration of the pulse. In surveys of wildlife populations, it is frequently observed that nearly every female is carrying a fetus. Though the number of offspring can vary by age, a pregnant deer will generally give birth to 1-3 fawns on average \citep{repro_1999}. We determined the value of the amplitude parameter, $A$, so that each birth pulse would result roughly in a doubling of the population size. 
+
+Mortality is assumed to be unrelated to disease status in this case, as the slow disease progression and high turnover rate of individuals mitigates the impact of disease-related mortality. We assess two possible routes of mortality: either by natural causes and interspecific competition for resources or by hunter harvest. Natural mortality is expressed as the combination of a baseline mortality rate and an additional penalty from competitive interaction between individuals, as shown in equation \ref{MR}. This serves to limit the growth within the population in the form of individuals competing for limited resources within the environment by implementing a population level carrying capacity, similar to that used in \citet{Ramsey2010}.
+
+\begin{equation}
+    \eta(t) = \eta_{nat} + \gamma\left(\frac{N}{K}\right)^{\theta}
+    \label{MR}
+\end{equation}
+
+Mortality due to hunter harvest is largely seasonal and takes place between the months of October-December in most places. Regardless of the actual duration of the hunting season, current wildlife management practices aim to harvest roughly 20\% of the population each year\citep{Frawley2020}. While there may be some temporal differences in the numbers harvested between archery and rifle season, we assume a uniform harvest rate over these months to ensure a fixed proportion ($\eta_{h,q}$) of the population is removed annually via hunter harvest.  Individuals removed in this way are used to estimate disease prevalence in the population under some critical assumptions. First, we assume that all harvested animals are submitted for inspection, and that post mortem diagnostics are perfect in detecting infected animals, regardless of how recently they were infected. These are largely optimistic assumptions, as not every hunter will provide samples. Similarly, infected animals may not be detected based on the tissue sample that is provided as well as the time that the individual has been infected. 
+
+\subsection{Disease Dynamics}
+\doublespacing
+Using an SEI framework, we model the disease state of all individuals within the population. We express the density dependent transmission pattern in the transmission parameter ($\beta$), and consider transmission of bTB by by two pathways. 
+
+Direct deer to deer transmission can occur when infected individuals directly contact susceptible individuals or through environmental fomites. We assume the relative risk of this contact is constant throughout the year given the same level of disease prevalence. Transmission can also occur due to contact with cattle herds infected with bTB. Since deer can cross fence lines and interact with cattle and potentially infected fomites such as feed or water sources, deer may become infected as a result of visiting an infected farm. In accordance with previous studies of. radio-collared deer, we allow these farm contact rates to vary quarterly by parameterizing different seasonal farm contact rates ($p_{2,q}$). The index, q indicates the current quarter, so $p_{2,q}$ is effectively defined as a step function that changes value every 3 months.  To account for the increased contact rate with farms of super susceptibles, we apply a scalar constant parameter ($\phi$) to increase the farm contact rate for these individuals, contributing to increased infection risks due to farm contact for these individuals. 
+
+The latent period of bTB can be highly variable, depending on the immune system of the individual as well as the mode of transmission \citep{brooks-pollock}. In any case, this latency period of bTB is generally on the order of months and is almost never shorter, so we ignore the possibility that newly exposed individuals also become infectious in the same time step. We model this variable latency by modeling the duration of the latency period as a gamma random variable. We parameterize this gamma distribution consistent with results of artificial infection studies measuring bTB latency periods in deer \citep{Palmer2003, Palmer2002a}. The transition rate to the infectious class was determined by drawing a gamma random variable from the aforementioned distribution at the beginning of each time step and taking the inverse to translate the latency duration into a transition rate. 
+
+\subsection{Model Equations and Parameters}
+\doublespacing
+We employ a deterministic ODE model framework (eqn \ref{ODE_eqns}) to express the relevant population  and disease dynamics within a wildlife system. Stochastic algorithms are then employed to replicate these dynamics while accounting for the stochasticity inherent of natural systems. 
+
+In this ODE framework, we express birth dynamics with the seasonal Gaussian function described in section \ref{popDySec}. Newborn individuals are added only to susceptible classes, as we assume that no newborn individuals are initially infected. This rate of addition to susceptible classes via birth depends on the population size and the value of the birth rate at a given time point, and the additional factor $\xi$ determines the proportion of newborns that are super susceptibles.
+
+Removal from the population via mortality in this framework is equal among disease classes, depending on the density dependent mortality and hunter harvest rates. We assume that there are no infection-dependent mortality risks based on this functional form. Notably, the natural mortality rate depends on the number of individuals in each class while hunter harvest depends on the proportion within each class. We justify this structure as hunter harvest is non-autonomously governed by wildlife regulation agencies, ensuring a constant effort of harvest from year to year. Seasonality is included in the harvest parameter $\eta_{h,q}$ so that it takes its value designated in table \ref{parTable} only during hunting season and is zero otherwise.
+
+Transitions between classes as shown in figure \ref{dis_fig} are similarly expressed in the ODEs. Notably we only distinguish super susceptibles as susceptible individuals because transmission from farm contact is no longer relevant to previously infected individuals. We describe the transition from either susceptible class to the exposed class via transmission from other infected wildlife or an infected farm. Wildlife transmission is reflected with the usual $\beta$SI term while farm transmission depends only on the probability of farm contact and not the number of infectious individuals. Since $p_{2,q}$ represents the quarterly probability that a deer would contact an infectious farm, the increased risk of farm contact in super susceptibles is expressed by including the scaling factor $\phi$ on this term.
+
+Transition from the exposed to infectious class is expressed by converting the mean latency duration into a rate.
+
+\begin{figure}
+\centering
+\begin{subfigure}[t]{0.6\textwidth}
+\centering
+\includegraphics[width=0.35\textwidth]{figures/pop_struct.png} 
+\caption{Population dynamics structure. N represents the number of individuals in the population regardless of disease state.} \label{pop_fig}
+\end{subfigure}
+
+\begin{subfigure}[t]{0.6\textwidth}
+\centering
+\includegraphics[width=\textwidth]{figures/model_struct.png} 
+\caption{Susceptible-Exposed-Infectious disease structure. The SS subscript denotes super susceptible individuals.} \label{dis_fig}
+\end{subfigure}
+
+ \caption{Overview of the model class structure broken down into population and disease dynamics. Model population dynamics shown in figure \ref{pop_fig} indicate addition to the population by a time-dependent (seasonal) birth rate and removal by natural mortality or hunter harvest. The transitions between disease states are shown in figure \ref{dis_fig}. super susceptibles are only considered in the susceptible class since they are treated identically to ordinary individuals in the exposed (E) and infectious (I) classes.}
+
+\end{figure}
+
+
+
+\begin{align}
+    \label{ODE_eqns}
+    \frac{dS}{dt} &= (1-\xi)\cdot\alpha(t)\cdot N - \eta(t) \cdot S - \eta_{h,q}\cdot \left(\frac{S}{N}\right) - \beta \cdot S\cdot \left(  I + p_{2,q}\right) \\
+    \frac{dS_{SS}}{dt} &= \xi\cdot\alpha(t)\cdot N - \eta(t) \cdot S_{SS} - \eta_{h,q}\cdot \left(\frac{S_{SS}}{N}\right) - \beta \cdot S_{SS}\cdot \left( I + \phi  \cdot p_{2,q}\right)\\
+    \frac{dE}{dt} &= \beta \cdot S\cdot \left( I +  p_{2,q}\right) + \beta \cdot S_{SS}\cdot \left( I + \phi  \cdot p_{2,q}\right) - \eta(t) \cdot (E) - \eta_{h,q}\cdot \left(\frac{E}{N}\right) - \frac{E}{\sigma} \\
+    \frac{dI}{dt} &= \frac{E}{\sigma} - \eta(t) \cdot I - \eta_{h,q}\cdot \left(\frac{I}{N}\right) 
+\end{align}
+
+\equationset{ODE model equations. Parameters with 'q' subscript are defined quarterly}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\singlespace
+\begin{center}
+\begin{longtable}{|M|V|S|L|}
+\caption{Table of Parameter Values} \\
+ \hline 
+\textbf{Parameter (Symbol)} & {\textbf{Value}} & \textbf{Units} & \textbf{Source} \\ 
+  \hline
+  \endfirsthead
+  \multicolumn{4}{c}%
+{\tablename\ \thetable\ -- \textit{Continued from previous page}} \\
+\hline
+\textbf{Parameter (Symbol)} & {\textbf{Value}} & \textbf{Units} & \textbf{Source} \\ 
+\hline
+\endhead
+\hline \multicolumn{4}{r}{\textit{Continued on next page}} \\
+\endfoot
+\hline
+\endlastfoot
+ %%%%%%%%%%%%%%%%%%%%%%%
+ Mortality rate ($\eta$) &  0.05 & Year$^{-1}$  & \citep{van1997mortality, ramsey2014} \\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Density dependent mortality rate ($\gamma$) & 2.0 & Year$^{-1}$ & \citep{ramsey2014}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Asymmetry of Density dependent mortality ($\theta$) & 1 & - & \citep{ramsey2014}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ $Q_4$ harvest proportion ($\eta_{h,q=4}$) &  0.2 & Month$^{-1}$  & \citep{Frawley2020}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Birth rate amplitude ($A$) &  1.0 & Month$^{-1}$  & \citep{births}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Birth rate phase shift ($\omega$) &  11  & -  & \citep{births}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Birth rate synchrony ($s$) &  68.0 & -  & \citep{births}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Transmission rate ($\beta$) &  0.5 & Month$^{-1}$  & \citep{Palmer2001, Costello, Conlan2012}\\
+ \hline
+
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ cattle and fomite contact rate ($p_{2,q}$) &  $p_{2,q=1}$ = 0.01\newline $p_{2,q=2}$ = 0.015\newline $p_{2,q=3}$ = 0\newline $p_{2,q=4}$ = 0.0075& -  & \citep{Berentsen2014}\\
+ \hline
+ %%%%%%%%%%%%%%%%%%%%%%% 
+ Progression rate to $E_1$ class ($\sigma$) & $\sigma$ $\sim Gamma$($\kappa$,$\gamma$)  &  Month$^{-1}$  & \citep{Barlow1997},\newline \citep{Conlan2012}, \newline \citep{ohare}, \newline \citep{Palmer2003}\\
+  & mean = 9.75, $\gamma$ = 1.85  & & \\ 
+  & & & \\
+  \hline
+  %%%%%%%%%%%%%%%%%%%%%%% 
+ Proportion of super susceptibles ($\xi$) &  .1 & - & NA\\
+ \hline
+%%%%%%%%%%%%%%%%%%%%%%% 
+ Farm contact scaling factor ($\phi$) &  5 & - & NA
+ 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\label{parTable}
+\end{longtable}
+
+
+\end{center}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Scenarios Simulated}
+\doublespacing
+We simulated several different scenarios by modifying the forces of infection, herd size, infection prevalence, hunter harvest proportions, and frequency of super susceptibles. 
+
+Base runs under different force of infection were explored over 500 replicates of the discrete time model, with herd sizes from 25 to 750 individuals over a duration of 10 years. Each simulation was run using the default parameter values shown in table \ref{parTable} and with an initial infection prevalence of 2\% of the population initially exposed\citep{Fitzgerald2013}. Simulations from the continuous and discrete time stochastic models were compared to the deterministic model solutions using identical parameter values to verify the conversion to discrete time still captured overall model behaviors. 
+
+In addition to these base runs, we explored the probability of infection fadeout under various levels of initial infection prevalence. For these fadeout simulations, we ran 500 replicates of the model for a duration of 20 years under a seeded infection scenario. We explored endemic disease states by starting the simulation with a fixed proportion of the population initially infected. Similarly we simulated newly seeded infections due to mechanisms such as migration by designating a fixed number of individuals to be infected at the beginning of the simulation. We quantified the probability of fadeout as the proportion of the 500 replicates that experienced fadeout. This procedure was repeated over 40 herd sizes from 25 to 1000 and infection prevalence of either 0 to 25 individuals or 0 to 50\% initially infected. In both cases, a regression analysis was performed to assess the relative importance of herd size and initial prevalence on fadeout probability.
+
+In a similar manner we explored the effects of super susceptibles on the size of an outbreak when spillover from an infected farm was possible. For these simulations, we ran 500 replicates over one-year periods with a constant risk of spillover. This shorter duration was used, as dynamics varied little after the first few years, and we are more interested in the initial growth period in wildlife disease prevalence. We assessed the mean infection prevalence at the end of each replicate of the simulation. This was done for 40 herd from sizes between 25 and 1000 individuals with the proportion of super susceptibles in the population ($\xi$) ranging from 0-1. Again, a regression analysis on the effect of super susceptible proportion and herd size on mean infection prevalence was performed to identify important factors.
+
+The effects of hunter harvest rates were assessed in a similar manner, as 500 replicates of the simulation were run for 20 years with hunter harvest proportions ranging from 0 to 50\% harvest with herd sizes from 25 to 1000 individuals. These simulations also used an initial prevalence of 2\% of the population initially infected. We assessed the probability of fadeout and the ratio of true prevalence over estimated prevalence. Regression analysis on these output metrics was performed to assess the relative importance of the effects of herd size and harvest rates. 
+
+In each of the aforementioned regression analyses the data were centered and scaled since the metrics in each of these independent analyses were on different orders of magnitude. 
+
+\subsection{Sensitivity Analysis} 
+Since the parameters used in the model all carry a degree of uncertainty, we would like to account for this uncertainty and understand which parameters are most influential in the model output. We considered changes in model output using four response metrics, calculated for each simulation at the end of the simulation: true prevalence, mean estimated prevalence, fadeout, and time to fadeout. We perform a partial rank correlation coefficient analysis to analyze the relative effect of each parameter on these four model output metrics. 
+
+We use a Latin hypercube sampling scheme to generate 1000 parameter sets over a range of values for each parameter using the lhs package in R \citep{lhs}. As a conservative assumption, all parameters are chosen from a uniform distribution ranging from zero to ten times the value given in table \ref{parTable} or from 0 to 1 if the parameter is a proportion or probability. The parameters associated with the birth rate were varied over a much more narrow range due to highly observed consistency. To reflect this increased certainty, these parameters only varied uniformly with a range of $\pm10\%$ the value given in table \ref{parTable}. 
+
+For each parameter set, 500 replicates of the stochastic continuous time model were run as a pre-simulation to calculate monthly $\lambda$ values \citep{SANDMANN}. The discrete time model was then run with these $\lambda$ values with 500 replicates for a period of four years, as this was sufficient to capture model behaviors with default values. The values for each of the four sensitivity metrics were averaged over the 500 simulation replicates to quantify the average effects of the parameters on the model output.
+
+Because PRCC uses the assumption of monotonicity, we verified that each of the model parameters had a primarily monotonic effect on each of the response metrics. Only the start quarter seemed to have a distinctly non-monotonic relationship, so analyses were split over each quarter separately. 
+
+To address any interaction between parameters, which is not possible with PRCC, we used a linear regression analysis of our sensitivity metrics on the parameter values. We compared these regression results to the PRCC analyses looking for similarities between the model outputs. While linear regression models tend to be fairly robust, the assumption of monotonicity in PRCC is much less stringent than linearity. We ran a regression model with interactions to explore the importance of interaction between model parameter values. The quality of these analyses depend on the similarities of the PRCC and no-interaction regression, as differences between those scenarios may indicate meaningful violations of model assumptions. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Results}
+\subsection{Effects of Population Size and Composition}
+
+In runs where outbreaks were seeded with 2\% of the population initially exposed to bTB, we observed that the number of infected individuals increases over time to an equilibrium value, where roughly 25\% of the population can be infectious. This observation was fairly consistent across herd sizes, with smaller populations being more prone to dramatically different results due to effects of stochasticity. 
+
+\begin{figure}
+\centering
+\begin{subfigure}[t]{.9\textwidth}
+\centering
+%\includegraphics[width=\textwidth]{\detokenize{figures/seeded_classes.png}} 
+\includegraphics[width=\textwidth]{\detokenize{figures_new/fig2a.jpeg}} 
+\caption{Discrete time stochastic model outbreak trajectories} \label{prevSeeded_250}
+\end{subfigure}
+
+\begin{subfigure}[t]{.9\textwidth}
+\centering
+%\includegraphics[width=\textwidth]{\detokenize{figures/spill_classes.png}} 
+\includegraphics[width=\textwidth]{\detokenize{figures_new/fig2b.jpeg}} 
+\caption{Discrete model trajectories with livestock spillover} \label{prevSpill_250}
+\end{subfigure}
+
+ \caption{Figures show predicted model trajectories in seeded outbreaks with 2\% of the population initially exposed (\ref{prevSeeded_250}) and with a constant risk of spillover from wildlife.
+ Stochastic trajectories are shown in color, with the deterministic ODE trajectory given in black. Time in months is shown on the x-axis and the number of individuals in the specified class is shown on the y-axis.}
+
+\end{figure}
+
+
+The results of these simulations with an initial herd size of 250 are shown in figures \ref{prevSeeded_250} and \ref{prevSpill_250}. The relative numbers of individuals in each class remains about the same between these infection scenarios, perhaps suggesting within-herd transmission is the main driver of the outbreak dynamics. One notable difference between the two scenarios is the apparent bimodal trajectory present only with seeded infections. This indicates replicates where infection fadeout occurred: this is only apparently possible in the seeded case, as the constant force of infection always allows the population to be reinfected even if fadeout had occurred at some point before.
+
+
+\subsection{Effect of super susceptibles}
+Since super susceptibles only differ in farm contact rates, the relative size of an outbreak in deer should only vary in the case where infected farms provide an additional source of infection. However, even in this case of spillover, the proportion of the population that becomes infected after one year only depends on herd size. This trend is apparent visually in figure \ref{SSprevSpill}, as the mean infection prevalence changes only with herd size. Linear regression results shown in table \ref{SS_reg} show only herd size as a significant predictor of outbreak size. This suggests that super susceptibles are relatively unimportant in wildlife outbreak dynamics even when spillover from livestock is possible.
+
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=150mm,scale=0.75
+%     ]{\detokenize{figures_new/SS_new.png}}
+%     \caption{The mean proportion of the population that was infected after 1 year is shown in color, with warmer colors indicating higher prevalence. Each box represents the results of 500 one-year simulations with a constant force of infection from livestock. Herd size is shown on the x-axis, and the proportion of the population that are super susceptibles is shown on the y-axis.}
+%     \label{SSprevSpill}
+% \end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=150mm,scale=0.75
+    ]{\detokenize{figures_new/ss_prev_new.png}}
+    \caption{The mean proportion of the population that was infected after 1 year is shown in color, with warmer colors indicating higher prevalence. Each box represents the results of 500 one-year simulations with a constant force of infection from livestock. Herd size is shown on the x-axis, and the proportion of the population that are super susceptibles is shown on the y-axis.}
+    \label{SSprevSpill}
+\end{figure}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{table}[H]
+\begin{tabular}{ L S M S } 
+ \specialrule{.1em}{.05em}{.05em} 
+\multicolumn{3}{V}{\textbf{mean infection prevalence}} & \\ 
+\textit{Predictors} & \textit{Estimates} & \textit{CI} & \textit{p} \\
+\hline
+ (intercept) & 0.00 & -0.01 -- 0.01 & 1.000 \\ 
+
+ proportion of super susceptibles & 0.00 & -0.01 -- 0.01 & 0.943 \\ 
+
+ herd size & 1.0 & 0.99 -- 1.00 & \textbf{<0.001} \\ 
+ \hline
+ Observations & \multicolumn{1}{M}{630} \\
+
+ $R^2$ / $R^2$ adjusted & \multicolumn{1}{M}{0.995 / 0.995} &&\\
+
+\end{tabular}
+\caption{Linear regression was performed on the mean infection prevalence, using herd size and proportion of super susceptibles as covariates. Only herd size was significant for p<0.05, suggesting super susceptibles do not contribute significantly to outbreak size. These data were standardized prior to regression to account for different orders of magnitude between covariates.}
+\label{SS_reg}
+\end{table}
+\end{center}
+
+
+\subsection{Infection Fadeout}
+In addition to considering the size of an outbreak, we are also interested in the probability that a bTB outbreak fades out (i.e. that the number of infected individuals is zero). 
+
+In the case where a small number of infected individuals are introduced, the probability of fadeout depends almost entirely on the number of initially exposed individuals and not at all on herd size. Figure \ref{fadePropNum} demonstrates this trend, showing variation only as the number of initial infections increases. Intuitively, this increased number of infections corresponds with a decreased likelihood of fadeout and a greater time before fadeout occurs. This relationship between initial infections and fadeout probability are also demonstrated by a linear regression model in table \ref{FOreg_num}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=150mm,scale=0.75
+    ]{figures_new/fadeNum_new.png}
+    \caption{Proportion of 500 simulations where the outbreak faded out. Red indicates high fadeout probability while blue indicates lower fadeout probabilities. Grey areas indicate scenarios where no fadeout occured. Herd size is shown on the x-axis and the number of individuals starting in the exposed class is shown on the y-axis.}
+    \label{fadePropNum}
+\end{figure}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{table}
+\begin{tabular}{ L S M S } 
+ \specialrule{.1em}{.05em}{.05em} 
+\multicolumn{3}{V}{\textbf{fadeout probability}} & \\ 
+\textit{Predictors} & \textit{Estimates} & \textit{CI} & \textit{p} \\
+\hline
+ (intercept) & 0.00 & -0.07 -- 0.07 & 1.000 \\ 
+
+ number initially infected & -0.68 & -0.75 -- -0.61 & \textbf{<0.001} \\ 
+ herd size & -0.01 & -0.08 -- 0.06 & 0.840 \\ 
+ \hline
+ Observations & \multicolumn{1}{M}{420} &&\\
+
+ $R^2$ / $R^2$ adjusted & \multicolumn{1}{M}{0.464 / 0.461} &&\\
+\end{tabular}
+\caption{Linear regression was performed on fadeout probability, using herd size and the number of initially exposed animals as covariates. Only the number of initial infections was significant at the p<0.05 level. These data were standardized prior to regression to account for different orders of magnitude between covariates.}
+\label{FOreg_num}
+\end{table}
+\end{center}
+
+When considering an outbreak with a fixed proportion of the population initially exposed, herd size is then linearly related to the number of initial exposed. Table \ref{FOreg_num} shows the number of initially exposed animals is significantly negatively correlated with fadeout probability but not herd size. The number of initial infections is the primary driver of the observed trend in fadeout probability. When a fixed percentage of the population is initially infected, larger herds will have more infected individual than a smaller herd. Therefore, we necessarily see that herd size will be negatively correlated with fadeout probability under these scenarios. Figures and regression analysis for fadeout scenarios with a fixed proportion of the population initially infected can be found in the supplemental material.
+
+
+\subsection{Effects of Hunter-Harvest}
+In simulations where the the annual proportion of hunter harvested individuals varies, we consider changes in prevalence estimates and the probability of clearing bTB infections from a herd. 
+
+Figure \ref{prev_est} shows the average ratio of the observed:true prevalence over 500 replicates of a 10 year simulation with 2\% of the population initially infected. Notably, values for non-hunting months are not recorded or accounted for in this value. We see that increasing the hunting rate here has a greater effect in larger herd sizes. Since this directly correlates with number of individuals sampled, it seems reasonable that taking a large sample from a large population would provide the best prevalence estimate. However, it is worth noting that the peak value is 0.4, indicating that we are significantly underestimating the proportion of infected individuals, even in the extreme case of harvesting half the population every hunting season. Here, both variables are significantly positively correlated with the prevalence estimate, clearly a result of the influence of harvest sample size.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=150mm,scale=0.75
+    ]{figures_new/prevEst_new.png}
+    \caption{Mean estimated prevalence, given by the proportion harvested individuals that are infected divided by the true proportion of infected individuals in the population. A value of 1 indicates a perfect prevalence estimate while larger and smaller values indicate over- and underestimates respectively. Herd size is shown on the x-axis and the percentage of the population harvested annually is shown on the y-axis.
+    All outbreaks were seeded with 2\% of the population initially exposed.}
+    \label{prev_est}
+\end{figure}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{table}
+\begin{tabular}{ L S M S } 
+ \specialrule{.1em}{.05em}{.05em} 
+\multicolumn{3}{V}{\textbf{mean estimated prevalence}} & \\ 
+\textit{Predictors} & \textit{Estimates} & \textit{CI} & \textit{p} \\
+\hline
+ (intercept) & -0.00 & -0.02 -- 0.02 & 1.000 \\ 
+
+ percent harvested & 0.94 & 0.92 -- 0.96 & \textbf{<0.001} \\ 
+
+ herd size & 0.19 & 0.17 -- 0.21 & \textbf{<0.001} \\ 
+ \hline
+  Observations & \multicolumn{1}{M}{630} &&\\
+
+ $R^2$ / $R^2$ adjusted & \multicolumn{1}{M}{0.923 / 0.923} &&\\
+\end{tabular}
+\caption{Linear regression was performed on the estimated prevalence ratio, using herd size and proportion of the population harvested as covariates. Both covariates were significantly related to the output, but this is likely caused due to a direct relationship with the number of individuals sampled. These data were standardized prior to regression to account for different orders of magnitude between covariates.}
+\label{prevEst_reg}
+\end{table}
+\end{center}
+
+Figure \ref{hunt_fade} shows fadeout probability in several population sizes under different levels of hunter-harvest. We see that the fadeout probability in the case where 2\% of the population is initially infected is almost entirely unrelated to the hunting rate, instead depending on herd size. As discussed in section 4.3 having a fixed proportion of the population infected would disproportionately affect larger herds. Consequently, this effect of herd size on fadeout is caused by a greater number of infected individuals. Regression model results shown in table \ref{huntFade_reg} validate this observation as harvest percentages are not significantly related to fadeout probability. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=150mm,scale=0.75
+    ]{figures_new/fadeHunt_new.png}
+    \caption{Fadeout probabilities for different herd sizes with a range of hunting regimes. Outbreaks are seeded with 2\% of the population initially exposed. }
+    \label{hunt_fade}
+\end{figure}
+
+\begin{center}
+\renewcommand{\arraystretch}{1.6}
+\begin{table}
+\begin{tabular}{ L S M S } 
+ \specialrule{.1em}{.05em}{.05em} 
+\multicolumn{3}{V}{\textbf{fadeout probability}} & \\ 
+\textit{Predictors} & \textit{Estimates} & \textit{CI} & \textit{p} \\
+\hline
+ (intercept) & -0.00 & -0.05 -- 0.05 & 1.000 \\ 
+
+ percent harvested & 0.01 & -0.04 -- 0.06 & 0.749 \\ 
+
+ herd size & -0.73 & -0.79 -- -0.68 & \textbf{<0.001} \\ 
+ \hline
+ Observations & \multicolumn{1}{M}{630} \\
+
+ $R^2$ / $R^2$ adjusted & \multicolumn{1}{M}{0.539 / 0.537} &&\\
+\end{tabular}
+\caption{Linear regression was performed on fadeout probability, using herd size and proportion of the population harvested as covariates. Only herd size was significant for p<0.05. These data were standardized prior to regression to account for different orders of magnitude between covariates.}
+\label{huntFade_reg}
+\end{table}
+\end{center}
+
+\subsection{Sensitivity Analysis}
+In the PRCC and linear regression analyses, seed quarter was observed to be non-monotonic. This is reasonable in that it causes a temporal shift in when the simulation ends and is not necessarily influencing the outbreak directly. To account for this analyses were performed separately across quarters. Results shown in figure \ref{sens_res} are for outbreaks seeded in January with 2$\%$ of the population initially infected.
+
+In general, the PRCC and regression models supported similar conclusions regarding parameter significance (p<0.05) in addition to the direction and magnitude of these relationships. To make the correlation coefficients from PRCC comparable to the regression coefficients between analyses, we divide all regression coefficients by the greatest magnitude coefficient such that all rescaled coefficients are on the interval [-1, 1]. 
+We see that parameters associated directly with population dynamics, such as carrying capacity, birth rate, and density dependent mortality terms appear to be consistently significant across these outbreak metrics. These analyses also suggest that the transmission rate ($\beta$) is insignificant to these metrics for p<0.05; however, the mean latency duration is significant in all metrics but observed prevalence, suggesting that the potentially long latency period is a limiting factor of disease transmission. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=150mm,scale=0.75
+    ]{figures_new/Sens_new.png}
+    \caption{Relative effect sizes of significant model parameters on several output metrics: the total number of infections at the end of the simulation (true prevalence), the proportion of simulations where fadeout occured (fadeout), the time to infection fadeout if it did occur (fadeout time), and the proportion of harvested individuals that were infected (observed prevalence). Bars on the x-axis show the relative magnitude and direction of the relationship, given by the correlation coefficient from PRCC analyses 
+    (top panel) or the regression coefficients (bottom panel) (rescaled to have magnitude $\leq$ 1) from the regression models. A threshold of p<0.05 was used to determine significant parameters.}
+    \label{sens_res}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+
+Due to technical and economic barriers, management and surveillance of wildlife disease is inherently difficult, and mathematical models frequently serve as a cost efficient alternative to catch and release diagnostics and surveillance. Using our stochastic modeling framework to replicate the seasonality in the population and underlying disease dynamics, we are able to assess the importance of heterogeneous farm contacts and hunter-harvest disease prevalence estimates.
+
+Our model finds that fadeout of bTB within a wildlife population is unlikely overall; however, in the case where only a few individuals were initially infected fadeout was possible. The model sensitivity analysis suggests that underlying population dynamics and the average duration of the latent period are probable drivers of fadeout and outbreak duration. Stochastic effects in the latency period and mortality are likely responsible for these observed patterns. Because of the long latency period of bTB, it is possible that the population level turnover rates are comparable to the latency period. This leads to an increased probability that an animal may be removed due to natural causes or hunter harvest before becoming infectious. Stochastic effects in mortality can be particularly important in this framework. Our simulations suggest that fadeout is improbable in endemic states under current management practices, in agreement with previous studies \citep{ramsey2014}. Therefore, mortality of infected animals during the early stages of an outbreak may be crucial in driving disease fadeout.
+
+
+Our results from simulations that varied the proportion of individuals classified as super susceptibles indicated that these individuals are apparently unimportant to the overall outbreak dynamics. While these individuals may be important in introducing an infection to the herd, it appears that transmission is then dominated by intraspecific interactions. Alternatively, this could suggest that the increased rate of farm contact for the super susceptibles is not meaningfully different from that of ordinary individuals. While their farm contact rate is higher on an individual level, their population level effects may simply be masked by their low frequency within the population.
+
+
+Similar to previous literature \citet{Obrien2004, Palmer1999}, our findings also suggest disease prevalence estimates from hunter harvest are likely underestimates of true prevalence. Since estimates of bTB prevalence in wildlife populations remain low, it is possible to miss this small infected population within the sample of harvested individuals. Furthermore, not all harvested deer have samples submitted for testing, leading to an even smaller effective sample size, so there are systematic biases contributing to this underestimate too \citep{Obrien2004}. These estimates might only be improved by increasing disease prevalence or harvest rates, and these options are either undesirable or unsustainable, making improvement of such estimates impractical. In addition to being an inefficient method to estimate disease prevalence, our findings also suggest that hunter harvest is unlikely to be an effective tool in management of bTB. Even when starting with relatively low prevalence, fadeout seemed to be unrelated to the harvest rate. While it may seem counter-intuitive, we suspect that this is actually the result of compensatory dynamics, where increasing the hunting rate reduces the extent of interspecific competition within the population \citep{comp_dynamics}. Consequently, the overall population dynamics in the system do not change much as a result, and the probability of fadeout remains about the same.
+
+Our results are in agreement with previously published literature; however, there are several limitations of the current model scheme that influence these conclusions. It has been previously observed that mortality and reproductive rates vary by age; similarly, farm contact and harvest rates can also be explained by sex differences in white-tailed deer\citep{repro_1999}. Seasonal breeding behaviors are also frequently associated with differences in contact rates and consequently disease prevalence between sexes in deer \citep{rogers2022}. Also, the notion of environmental transmission has been proposed in previous literature, but this route of transmission remains nebulous in terms of its function in this model. Spatially explicit models, similar to those used by \citet{Ramsey2010, ramsey2014} could be used to further assess these modes of transmission. While including a spatial component or an age and sex structure might improve the quality of out predicted outbreak trajectories, we expect that any differences would be unlikely to qualitatively change our results and conclusions.
+
+While livestock management strategies for bTB in Michigan have maintained prevalence below federally legal thresholds in cattle, there is little evidence that there have been any changes to the prevalence in wildlife. The conclusions of this study indicate that fadeout of bTB within these reservoirs is largely improbable without any intervention for wildlife populations specifically. Previous studies have considered how various management strategies such as fencing or covered feed storage might reduce wildlife contact \citep{Berentsen2014}. While these management options have also been shown to be imperfect in preventing access to all deer and other potential bTB hosts (such as opossums), they seldom target deer directly \citep{Wilber2019}. Options such as vaccination with the bacille Calmette-Guerin (BCG) vaccine are possible options for disease management in deer; although, this may not be fiscally maintainable and might raise concern within the hunter communities \citep{Palmer2007}. 
+Since fomite contact is suspected to be the primary cause of transmission, assessment of management strategies in the future should perhaps focus more on this livestock-wildlife interface\citep{Lavelle2016}. While our findings suggested that super susceptibles were unimportant to wildlife outbreak trajectories, it is possible that these individuals may still be important to the system as a whole, as they may be more likely to infect susceptible cattle farms. 
+
+To further investigate these ideas, future work will directly assess the coupled disease dynamics between wildlife and livestock. While we use this assumption of an infected farm, the number of infected cattle or the number of infected farms are likely to determine the spillover risk to deer; similarly, the risk of spillover to cattle would likely depend on the number of infected deer and the frequency of visitations. In this case, it may be possible to explore the effect of deer with higher farm visitation rates, as they may be important when considering transmission to cattle instead. Rather than treat these hypothetical sources of infection as nebulous entities, exploring these interacting dynamics explicitly may lead to novel conclusions regarding disease management policies and relative risk of infection. In future work, we plan to further address this relationship between wildlife and livestock to understand how endemic wildlife infections may contribute to recurring spillover and how bTB infections within livestock could contribute to the development of wildlife reservoirs. Within such a model, it would also be possible to simulate the effects of livestock outbreak control policies for bTB to understand how these responses contribute to the potential for wildlife reservoir establishment in a more realistic scenario. Similarly, migration of infected deer and shipments of cryptically infected cattle may play a role in the national scale transmission of bTB. While Deer Management Unit (DMU) 487 in Michigan is currently the only region in the U.S. that is not bTB accredited free, there is a possibility that infected deer or cattle movement may result in long distance transmission. While previous work has shown that such situations are unlikely, preparation for such an outbreak scenario may be essential in preventing establishment of wildlife reservoirs in other regions of the U.S. where cattle and white-tailed deer (or other susceptible wildlife species) overlap. 
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\pagebreak
+\section{Funding} 
+Beck-Johnson’s salary for this work is supported by Agriculture and Food Research Initiative Competitive Grant no. 2018-67015-28289 from the USDA National Institute of Food and Agriculture.
+
+\section{Acknowledgements} The author would like to thank Stefan Sellman (Link\"{o}ping University) for providing code and assistance in early model development and Joshua Keller (Colorado State University) for advising on the statistical methods used in this work. 
+\pagebreak
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+
+\pagebreak
+
+
+
+\bibliographystyle{model2-names}
+%\bibliography{btbWL}
+
+
+\begin{thebibliography}{31}
+\expandafter\ifx\csname natexlab\endcsname\relax\def\natexlab#1{#1}\fi
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\texttt{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\eprint}[2][]{\url{#2}}
+\providecommand{\bibinfo}[2]{#2}
+\ifx\xfnm\relax \def\xfnm[#1]{\unskip,\space#1}\fi
+
+%Type = Article
+\bibitem[{Allen et~al.(2021)Allen, Ford and Skuce}]{allen2021does}
+\bibinfo{author}{Allen, A.R.}, \bibinfo{author}{Ford, T.},
+  \bibinfo{author}{Skuce, R.A.}, \bibinfo{year}{2021}.
+\newblock \bibinfo{title}{Does mycobacterium tuberculosis var. bovis survival
+  in the environment confound bovine tuberculosis control and eradication? a
+  literature review}.
+\newblock \bibinfo{journal}{Veterinary medicine international}
+  \bibinfo{volume}{2021}.
+  
+%Type = Article
+\bibitem[{Barlow et~al.(1997)Barlow, Kean, Hickling, Livingstone and
+  Robson}]{Barlow1997}
+\bibinfo{author}{Barlow, N.D.}, \bibinfo{author}{Kean, J.M.},
+  \bibinfo{author}{Hickling, G.}, \bibinfo{author}{Livingstone, P.G.},
+  \bibinfo{author}{Robson, A.B.}, \bibinfo{year}{1997}.
+\newblock \bibinfo{title}{A simulation model for the spread of bovine
+  tuberculosis within New Zealand cattle herds}.
+\newblock \bibinfo{journal}{Preventive Veterinary Medicine}
+  \bibinfo{volume}{32}, \bibinfo{pages}{57--75}.
+
+%Type = Article
+\bibitem[{Begon et~al.(2002)Begon, Bennett, Bowers, French, Hazel and
+  Turner}]{begon}
+\bibinfo{author}{Begon, M.}, \bibinfo{author}{Bennett, M.},
+  \bibinfo{author}{Bowers, R.G.}, \bibinfo{author}{French, N.P.},
+  \bibinfo{author}{Hazel, S.M.}, \bibinfo{author}{Turner, J.},
+  \bibinfo{year}{2002}.
+\newblock \bibinfo{title}{A clarification of transmission terms in
+  host-microparasite models : numbers, densities and areas}.
+\newblock \bibinfo{journal}{Epidemiol. Infect} \bibinfo{volume}{129},
+  \bibinfo{pages}{147--153}.
+
+%Type = Article
+\bibitem[{Berentsen et~al.(2014)Berentsen, Miller, Misiewicz, Malmberg and
+  Dunbar}]{Berentsen2014}
+\bibinfo{author}{Berentsen, A.R.}, \bibinfo{author}{Miller, R.S.},
+  \bibinfo{author}{Misiewicz, R.}, \bibinfo{author}{Malmberg, J.L.},
+  \bibinfo{author}{Dunbar, M.R.}, \bibinfo{year}{2014}.
+\newblock \bibinfo{title}{Characteristics of white-tailed deer visits to cattle
+  farms: Implications for disease transmission at the wildlife-livestock
+  interface}.
+\newblock \bibinfo{journal}{European Journal of Wildlife Research}
+  \bibinfo{volume}{60}, \bibinfo{pages}{161--170}.
+\newblock \bibinfo{note}{Home range estimation, visitation rates}.
+
+%Type = Article
+\bibitem[{Brooks-Pollock et~al.(2014)Brooks-Pollock, Roberts and
+  Keeling}]{brooks-pollock}
+\bibinfo{author}{Brooks-Pollock, E.}, \bibinfo{author}{Roberts, G.O.},
+  \bibinfo{author}{Keeling, M.J.}, \bibinfo{year}{2014}.
+\newblock \bibinfo{title}{A dynamic model of bovine tuberculosis spread and
+  control in Great Britain}.
+\newblock \bibinfo{journal}{Nature} \bibinfo{volume}{511},
+  \bibinfo{pages}{228--231}.
+  
+%Type = Manual
+\bibitem[{Carnell(2022)}]{lhs}
+\bibinfo{author}{Carnell, R.}, \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{lhs: Latin Hypercube Samples}.
+\newblock \bibinfo{note}{R package version 1.1.5}.
+
+%Type = Article
+\bibitem[{Conlan et~al.(2012)Conlan, McKinley, Karolemeas, Pollock, Goodchild,
+  Mitchell, Birch, Clifton-Hadley and Wood}]{Conlan2012}
+\bibinfo{author}{Conlan, A.J.}, \bibinfo{author}{McKinley, T.J.},
+  \bibinfo{author}{Karolemeas, K.}, \bibinfo{author}{Pollock, E.B.},
+  \bibinfo{author}{Goodchild, A.V.}, \bibinfo{author}{Mitchell, A.P.},
+  \bibinfo{author}{Birch, C.P.}, \bibinfo{author}{Clifton-Hadley, R.S.},
+  \bibinfo{author}{Wood, J.L.}, \bibinfo{year}{2012}.
+\newblock \bibinfo{title}{Estimating the hidden burden of bovine tuberculosis
+  in Great Britain}.
+\newblock \bibinfo{journal}{PLoS Computational Biology} \bibinfo{volume}{8}.
+
+%Type = Article
+\bibitem[{Costello et~al.(1998)Costello, Doherty, Monaghan, Quigley and
+  O'Reilly}]{Costello}
+\bibinfo{author}{Costello, E.}, \bibinfo{author}{Doherty, M.},
+  \bibinfo{author}{Monaghan, M.}, \bibinfo{author}{Quigley, F.},
+  \bibinfo{author}{O'Reilly, P.}, \bibinfo{year}{1998}.
+\newblock \bibinfo{title}{A study of cattle-to-cattle transmission of
+  mycobacterium bovis infection}.
+\newblock \bibinfo{journal}{The Veterinary Journal} \bibinfo{volume}{155},
+  \bibinfo{pages}{245--250}.
+  
+%Type = Article
+\bibitem[{Dusek et~al.(1989)Dusek, MacKie, Herriges and Compton}]{births}
+\bibinfo{author}{Dusek, G.L.}, \bibinfo{author}{MacKie, R.J.},
+  \bibinfo{author}{Herriges, J.D.}, \bibinfo{author}{Compton, B.B.},
+  \bibinfo{year}{1989}.
+\newblock \bibinfo{title}{Population ecology of white-tailed deer along the
+  lower Yellowstone river}.
+\newblock \bibinfo{journal}{Wildlife Monographs} , \bibinfo{pages}{24--28}.
+
+%Type = Article
+\bibitem[{Fitzgerald and Kaneene(2013)}]{Fitzgerald2013}
+\bibinfo{author}{Fitzgerald, S.D.}, \bibinfo{author}{Kaneene, J.B.},
+  \bibinfo{year}{2013}.
+\newblock \bibinfo{title}{Wildlife reservoirs of bovine tuberculosis worldwide:
+  Hosts, pathology, surveillance, and control}.
+\newblock \bibinfo{journal}{Veterinary Pathology} \bibinfo{volume}{50},
+  \bibinfo{pages}{488--499}.
+
+%Type = Misc
+\bibitem[{Frawley(2020)}]{Frawley2020}
+\bibinfo{author}{Frawley, B.J.}, \bibinfo{year}{2020}.
+\newblock \bibinfo{title}{Michigan department of natural resources a
+  contribution of federal aid in wildlife restoration, Michigan project w-147-r
+  equal rights for natural resource users Michigan deer harvest survey report
+  2019 seasons}.
+  
+%Type = Article
+\bibitem[{Lavelle et~al.(2016)Lavelle, Kay, Pepin, Grear, Campa and
+  VerCauteren}]{Lavelle2016}
+\bibinfo{author}{Lavelle, M.J.}, \bibinfo{author}{Kay, S.L.},
+  \bibinfo{author}{Pepin, K.M.}, \bibinfo{author}{Grear, D.A.},
+  \bibinfo{author}{Campa, H.}, \bibinfo{author}{VerCauteren, K.C.},
+  \bibinfo{year}{2016}.
+\newblock \bibinfo{title}{Evaluating wildlife-cattle contact rates to improve
+  the understanding of dynamics of bovine tuberculosis transmission in
+  Michigan, USA}.
+\newblock \bibinfo{journal}{Preventive Veterinary Medicine}
+  \bibinfo{volume}{135}, \bibinfo{pages}{28--36}.
+  
+%Type = Article
+\bibitem[{Miller and Sweeney(2013)}]{miller2013}
+\bibinfo{author}{Miller, R.S.}, \bibinfo{author}{Sweeney, S.J.},
+  \bibinfo{year}{2013}.
+\newblock \bibinfo{title}{Mycobacterium bovis (bovine tuberculosis) infection
+  in North American wildlife: current status and opportunities for mitigation
+  of risks of further infection in wildlife populations}.
+\newblock \bibinfo{journal}{Epidemiology \& Infection} \bibinfo{volume}{141},
+  \bibinfo{pages}{1357--1370}.
+  
+%Type = Article
+\bibitem[{O'brien et~al.(2004)O'brien, Schmitt, Berry, Fitzgerald, Vanneste,
+  Lyon, Magsig, Fierke, Cooley, Zwick et~al.}]{Obrien2004}
+\bibinfo{author}{O'brien, D.J.}, \bibinfo{author}{Schmitt, S.M.},
+  \bibinfo{author}{Berry, D.E.}, \bibinfo{author}{Fitzgerald, S.D.},
+  \bibinfo{author}{Vanneste, J.R.}, \bibinfo{author}{Lyon, T.J.},
+  \bibinfo{author}{Magsig, D.}, \bibinfo{author}{Fierke, J.S.},
+  \bibinfo{author}{Cooley, T.M.}, \bibinfo{author}{Zwick, L.S.}, et~al.,
+  \bibinfo{year}{2004}.
+\newblock \bibinfo{title}{Estimating the true prevalence of mycobacterium bovis
+  in hunter-harvested white-tailed deer in Michigan}.
+\newblock \bibinfo{journal}{Journal of Wildlife Diseases} \bibinfo{volume}{40},
+  \bibinfo{pages}{42--52}.
+  
+%Type = Article
+\bibitem[{O'Hare et~al.(2014)O'Hare, Orton, Bessell and Kao}]{ohare}
+\bibinfo{author}{O'Hare, A.}, \bibinfo{author}{Orton, R.J.},
+  \bibinfo{author}{Bessell, P.R.}, \bibinfo{author}{Kao, R.R.},
+  \bibinfo{year}{2014}.
+\newblock \bibinfo{title}{Estimating epidemiological parameters for bovine
+  tuberculosis in British cattle using a bayesian partial-likelihood approach}.
+\newblock \bibinfo{journal}{Proceedings of the Royal Society B: Biological
+  Sciences} \bibinfo{volume}{281}.
+  
+%Type = Article
+\bibitem[{Palmer et~al.(2007)Palmer, Thacker and Waters}]{Palmer2007}
+\bibinfo{author}{Palmer, M.V.}, \bibinfo{author}{Thacker, T.C.},
+  \bibinfo{author}{Waters, W.R.}, \bibinfo{year}{2007}.
+\newblock \bibinfo{title}{Vaccination of white-tailed deer (odocoileus
+  virginianus) with mycobacterium bovis bacillus calmette guerín}.
+\newblock \bibinfo{journal}{Vaccine} \bibinfo{volume}{25},
+  \bibinfo{pages}{6589--6597}.
+  
+%Type = Article
+\bibitem[{Palmer et~al.(2002)Palmer, Waters and Whipple}]{Palmer2002a}
+\bibinfo{author}{Palmer, M.V.}, \bibinfo{author}{Waters, W.R.},
+  \bibinfo{author}{Whipple, D.L.}, \bibinfo{year}{2002}.
+\newblock \bibinfo{title}{Lesion development in white-tailed deer (odocoileus
+  virginianus) experimentally infected with mycobacterium bovis}.
+\newblock \bibinfo{journal}{Veterinary pathology} \bibinfo{volume}{39},
+  \bibinfo{pages}{334--340}.
+  
+%Type = Article
+\bibitem[{Palmer et~al.(2003)Palmer, Waters and Whipple}]{Palmer2003}
+\bibinfo{author}{Palmer, M.V.}, \bibinfo{author}{Waters, W.R.},
+  \bibinfo{author}{Whipple, D.L.}, \bibinfo{year}{2003}.
+\newblock \bibinfo{title}{Aerosol exposure of white-tailed deer (odocoileus
+  virginianus) to mycobacterium bovis}.
+\newblock \bibinfo{journal}{Journal of Wildlife Diseases} \bibinfo{volume}{39},
+  \bibinfo{pages}{817--823}.
+  
+%Type = Article
+\bibitem[{Palmer et~al.(1999)Palmer, Whipple and Olsen}]{Palmer1999}
+\bibinfo{author}{Palmer, M.V.}, \bibinfo{author}{Whipple, D.L.},
+  \bibinfo{author}{Olsen, S.C.}, \bibinfo{year}{1999}.
+\newblock \bibinfo{title}{Development of a model of natural infection with
+  mycobacterium bovis in white-tailed deer}.
+\newblock \bibinfo{journal}{Journal of Wildlife Diseases} \bibinfo{volume}{35},
+  \bibinfo{pages}{450--457}.
+  
+%Type = Article
+\bibitem[{Palmer et~al.(2001)Palmer, Whipple and Waters}]{Palmer2001}
+\bibinfo{author}{Palmer, M.V.}, \bibinfo{author}{Whipple, D.L.},
+  \bibinfo{author}{Waters, W.R.}, \bibinfo{year}{2001}.
+\newblock \bibinfo{title}{Experimental deer-to-deer transmission of
+  mycobacterium bovis}.
+\newblock \bibinfo{journal}{American Journal of Veterinary Research}
+  \bibinfo{volume}{62}, \bibinfo{pages}{692--696}.
+  
+%Type = Article
+\bibitem[{Peel et~al.(2014)Peel, Pulliam, Luis, Plowright, O'Shea, Hayman,
+  Wood, Webb and Restif}]{webb2014}
+\bibinfo{author}{Peel, A.J.}, \bibinfo{author}{Pulliam, J.R.},
+  \bibinfo{author}{Luis, A.D.}, \bibinfo{author}{Plowright, R.K.},
+  \bibinfo{author}{O'Shea, T.J.}, \bibinfo{author}{Hayman, D.T.},
+  \bibinfo{author}{Wood, J.L.}, \bibinfo{author}{Webb, C.T.},
+  \bibinfo{author}{Restif, O.}, \bibinfo{year}{2014}.
+\newblock \bibinfo{title}{The effect of seasonal birth pulses on pathogen
+  persistence in wild mammal populations}.
+\newblock \bibinfo{journal}{Proceedings of the Royal Society B: Biological
+  Sciences} \bibinfo{volume}{281}.
+  
+%Type = Article
+\bibitem[{Ramsey and Efford(2010)}]{Ramsey2010}
+\bibinfo{author}{Ramsey, D.S.}, \bibinfo{author}{Efford, M.G.},
+  \bibinfo{year}{2010}.
+\newblock \bibinfo{title}{Management of bovine tuberculosis in brushtail
+  possums in New Zealand: Predictions from a spatially explicit,
+  individual-based model}.
+\newblock \bibinfo{journal}{Journal of Applied Ecology} \bibinfo{volume}{47},
+  \bibinfo{pages}{911--919}.
+
+%Type = Article
+\bibitem[{Ramsey et~al.(2014)Ramsey, O'Brien, Cosgrove, Rudolph, Locher and
+  Schmitt}]{ramsey2014}
+\bibinfo{author}{Ramsey, D.S.}, \bibinfo{author}{O'Brien, D.J.},
+  \bibinfo{author}{Cosgrove, M.K.}, \bibinfo{author}{Rudolph, B.A.},
+  \bibinfo{author}{Locher, A.B.}, \bibinfo{author}{Schmitt, S.M.},
+  \bibinfo{year}{2014}.
+\newblock \bibinfo{title}{Forecasting eradication of bovine tuberculosis in
+  Michigan white-tailed deer}.
+\newblock \bibinfo{journal}{Journal of Wildlife Management}
+  \bibinfo{volume}{78}, \bibinfo{pages}{240--254}.
+
+%Type = Article
+\bibitem[{Rogers et~al.(2022)Rogers, Brandell and Cross}]{rogers2022}
+\bibinfo{author}{Rogers, W.}, \bibinfo{author}{Brandell, E.E.},
+  \bibinfo{author}{Cross, P.C.}, \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{Epidemiological differences between sexes affect
+  management efficacy in simulated chronic wasting disease systems}.
+\newblock \bibinfo{journal}{Journal of Applied Ecology} \bibinfo{volume}{59},
+  \bibinfo{pages}{1122--1133}.
+
+%Type = Article
+\bibitem[{Sandmann(2008)}]{SANDMANN}
+\bibinfo{author}{Sandmann, W.}, \bibinfo{year}{2008}.
+\newblock \bibinfo{title}{Discrete-time stochastic modeling and simulation of
+  biochemical networks}.
+\newblock \bibinfo{journal}{Computational Biology and Chemistry}
+  \bibinfo{volume}{32}, \bibinfo{pages}{292--297}.
+
+%Type = Article
+\bibitem[{Shoemaker et~al.(2022)Shoemaker, Hallett, Zhao, Reuman, Wang,
+  Cottingham, Hobbs, Castorani, Downing, Dudney et~al.}]{comp_dynamics}
+\bibinfo{author}{Shoemaker, L.G.}, \bibinfo{author}{Hallett, L.M.},
+  \bibinfo{author}{Zhao, L.}, \bibinfo{author}{Reuman, D.C.},
+  \bibinfo{author}{Wang, S.}, \bibinfo{author}{Cottingham, K.L.},
+  \bibinfo{author}{Hobbs, R.J.}, \bibinfo{author}{Castorani, M.C.},
+  \bibinfo{author}{Downing, A.L.}, \bibinfo{author}{Dudney, J.C.}, et~al.,
+  \bibinfo{year}{2022}.
+\newblock \bibinfo{title}{The long and the short of it: Mechanisms of
+  synchronous and compensatory dynamics across temporal scales}.
+\newblock \bibinfo{journal}{Ecology} \bibinfo{volume}{103},
+  \bibinfo{pages}{e3650}.
+  
+%Type = Article
+\bibitem[{Soetaert et~al.(2010)Soetaert, Petzoldt and Setzer}]{deSolve}
+\bibinfo{author}{Soetaert, K.}, \bibinfo{author}{Petzoldt, T.},
+  \bibinfo{author}{Setzer, R.W.}, \bibinfo{year}{2010}.
+\newblock \bibinfo{title}{Solving differential equations in {R}: Package
+  de{S}olve}.
+\newblock \bibinfo{journal}{Journal of Statistical Software}
+  \bibinfo{volume}{33}, \bibinfo{pages}{1--25}.
+  
+%Type = Misc
+\bibitem[{USDA(2009)}]{USDA2009}
+\bibinfo{author}{USDA}, \bibinfo{year}{2009}.
+\newblock \bibinfo{title}{Analysis of bovine tuberculosis surveillance in
+  accredited free states}.
+\newblock \bibinfo{note}{BTB status report for all states. Important conclusion
+  that prevalence does not increase with herd size}.
+  
+%Type = Article
+\bibitem[{Van~Deelen et~al.(1997)Van~Deelen, Campa~III, Haufler and
+  Thompson}]{van1997mortality}
+\bibinfo{author}{Van~Deelen, T.R.}, \bibinfo{author}{Campa~III, H.},
+  \bibinfo{author}{Haufler, J.B.}, \bibinfo{author}{Thompson, P.D.},
+  \bibinfo{year}{1997}.
+\newblock \bibinfo{title}{Mortality patterns of white-tailed deer in Michigan's
+  upper peninsula}.
+\newblock \bibinfo{journal}{The Journal of wildlife management} ,
+  \bibinfo{pages}{903--910}.
+  
+%Type = Article
+\bibitem[{Wilber et~al.(2019)Wilber, Pepin, Campa, Hygnstrom, Lavelle, Xifara,
+  VerCauteren and Webb}]{Wilber2019}
+\bibinfo{author}{Wilber, M.Q.}, \bibinfo{author}{Pepin, K.M.},
+  \bibinfo{author}{Campa, H.}, \bibinfo{author}{Hygnstrom, S.E.},
+  \bibinfo{author}{Lavelle, M.J.}, \bibinfo{author}{Xifara, T.},
+  \bibinfo{author}{VerCauteren, K.C.}, \bibinfo{author}{Webb, C.T.},
+  \bibinfo{year}{2019}.
+\newblock \bibinfo{title}{Modelling multi-species and multi-mode contact
+  networks: Implications for persistence of bovine tuberculosis at the
+  wildlife–livestock interface}.
+\newblock \bibinfo{journal}{Journal of Applied Ecology} \bibinfo{volume}{56}.
+ 
+%Type = Article
+\bibitem[{Xie et~al.(1999)Xie, Hill, Winterstein, Campa~III, Doepker,
+  Van~Deelen and Liu}]{repro_1999}
+\bibinfo{author}{Xie, J.}, \bibinfo{author}{Hill, H.R.},
+  \bibinfo{author}{Winterstein, S.R.}, \bibinfo{author}{Campa~III, H.},
+  \bibinfo{author}{Doepker, R.V.}, \bibinfo{author}{Van~Deelen, T.R.},
+  \bibinfo{author}{Liu, J.}, \bibinfo{year}{1999}.
+\newblock \bibinfo{title}{White-tailed deer management options model (deermom):
+  design, quantification, and application}.
+\newblock \bibinfo{journal}{Ecological Modelling} \bibinfo{volume}{124},
+  \bibinfo{pages}{121--130}.
+
+\end{thebibliography}
+\pagebreak
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand\theequation{S\arabic{equation}}
+
+\setcounter{equation}{0}
+\setcounter{figure}{0}
+\setcounter{table}{0}
+\section{Supplemental Material}
+
+    Figure \ref{fadePropPct} represents an identical metric of fadeout probability, instead considering some percentage of the population to be initially infected. This might be more indicative of a situation where bTB is endemic in a wildlife population. Herd size is more significant in this case, as we see the probability of fadeout is much lower for a large herd than a small herd with the same proportion of infections. More importantly, there is a much lower probability that fadeout will occur at all in such an endemic state. Regression results shown in table \ref{FOreg_num} demonstrate this contrast from the case of newly established infections, as herd size and proportion of infected individuals are both significant. While the the low R$^2$ value is perhaps worth noting, this is likely a result of the apparent non-linearity in this relationship.
+    
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=150mm,scale=0.75
+        ]{figures_new/fadeNum_new.png}
+        \caption{Proportion of 500 simulations where the outbreak faded out. Red indicates high fadeout probability while blue indicates lower fadeout probabilities. Grey areas indicate scenarios where no fadeout occured. Herd size is shown on the x-axis and the proportion of the population starting in the exposed class is shown on the y-axis.}
+        \label{fadePropPct}
+    \end{figure}
+    
+    \begin{center}
+    \renewcommand{\arraystretch}{1.6}
+    \begin{table}
+    \begin{tabular}{ L S M S } 
+     \specialrule{.1em}{.05em}{.05em} 
+    \multicolumn{3}{V}{\textbf{fadeout probability}} & \\ 
+    \textit{Predictors} & \textit{Estimates} & \textit{CI} & \textit{p} \\
+    \hline
+     (intercept) & 0.00 & -0.07 -- 0.07 & 1.000 \\ 
+    
+     proportion initially infected & -0.42 & -0.49 -- -0.35 & \textbf{<0.001} \\ 
+    
+     herd size & -0.08 & -0.16 -- -0.01 & \textbf{<0.020} \\ 
+     \hline
+     Observations & \multicolumn{1}{M}{630} &&\\
+     $R^2$ / $R^2$ adjusted & \multicolumn{1}{M}{0.185 / 0.183} &&\\
+    \end{tabular}
+    \caption{Linear regression was performed on fadeout probability, using herd size and proportion initially exposed as covariates. Both herd size and the proportion of initially infected individuals were significant for p<0.05. These data were standardized prior to regression to account for different orders of magnitude between covariates.}
+    \end{table}
+    \label{FOreg_pct}
+    \end{center}
+
+\end{document}
