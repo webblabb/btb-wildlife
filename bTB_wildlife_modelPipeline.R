@@ -9,7 +9,7 @@
 ####################
 rm(list = ls()) #clear workspace for memory
 setwd(dirname(getActiveDocumentContext()$path))
-source(file = "bTBwl_func.R") #load model and supplementary functions/libraries to the workspace
+source(file = "R/bTBwl_func.R") #load model and supplementary functions/libraries to the workspace
 years = 10 #number of years for the simulation to run
 times = seq(from=0, to=years*12, by=12/365) #daily time steps
 seedQuarter = 1 #staring quarter for the simulation
@@ -17,7 +17,7 @@ prop_superSpreader = 0.05 #percent of SS individuals in the population
 pct = 0.02 #initial percent of the population exposed
 verbose = 0 #model diagnostic outputs - note that any message will likely cause the data to import incorrectly
 reps = 500 #stochastic simulation replicates
-sizes = c(10)#, 50, 100, 250, 500) #vector of herd sizes
+sizes = c(10, 50, 100, 250, 500) #vector of herd sizes
 infType = "seeded" # infection either 'seeded' or 'spillover' - changes forces of infection
 runtype = "stdPres_" # type of run - std for standard, SS for super susceptible, H for hunting, 
 name_out = paste0(runtype, infType,"_", pct,'-', prop_superSpreader, '-') #output data and plots name
@@ -224,7 +224,7 @@ stopCluster(cl)
 ####################
 rm(list = ls())
 setwd(dirname(getActiveDocumentContext()$path))
-source(file = "bTBwl_func.R")
+source(file = "R/bTBwl_func.R")
 years = 3
 seedQuarter = 1
 prop_superSpreader = 0.0
@@ -691,8 +691,8 @@ infType = "seeded"
 runtype = "fade_"
 type_of_integral = 3;
 name_out = paste0(runtype, infType,"_", pct,'-', prop_superSpreader, '-it', type_of_integral, '-')
-pth = "/home/webblab/Documents/Brandon/bTB_wildlife_code/" #path to main directory - must contain model .exe files
-save_runs = T
+pth = getwd() # "/home/webblab/Documents/Brandon/bTB_wildlife_code/" #path to main directory - must contain model .exe files
+save_runs = F
 save_plots = F
 save_plots_final = T
 fade_data = matrix(data = NA, nrow = length(sizes), ncol = length(pct))
@@ -908,8 +908,8 @@ names(fade_data_m) <- c('herd size','proportion initially exposed','fadeout prob
 names(fadeTime_data_m) <- c('herd size','proportion initially exposed','fadeout time')
 
 #file names for saving/loading data
-fade_data_name = "fade_PlotDat.RData"
-fadeTime_data_name = "fadeTime_PlotDat.RData"
+fade_data_name = "data/fade_PlotDat.RData"
+fadeTime_data_name = "data/fadeTime_PlotDat.RData"
 
 #save data to plot directory if it does not exist
 if(!exists(fade_data_name) && !exists(fadeTime_data_name)){
@@ -960,19 +960,19 @@ fade_time <- ggplot(data = fadeTime_data_m, aes(x=`proportion initially exposed`
 
 if(save_plots_final){
   
-  jpeg(filename = paste0("Fadeout_maps", '-', Sys.Date(), ".jpeg"))
+  jpeg(filename = paste0("results/Fadeout_maps", '-', Sys.Date(), ".jpeg"))
   print(ggarrange(fade_prob_map, fade_time_map,ncol=2, nrow=1))
   dev.off()
   
-  jpeg(filename = paste0("FadeoutProb_maps", '-', Sys.Date(), ".jpeg"))
+  jpeg(filename = paste0("results/FadeoutProb_maps", '-', Sys.Date(), ".jpeg"))
   print(fade_prob_map)
   dev.off()
   
-  jpeg(filename = paste0("FadeoutTime_maps", '-', Sys.Date(), ".jpeg"))
+  jpeg(filename = paste0("results/FadeoutTime_maps", '-', Sys.Date(), ".jpeg"))
   print(fade_time_map)
   dev.off()
   
-  jpeg(filename = paste0("Fadeout_plots", '-', Sys.Date(), ".jpeg"))
+  jpeg(filename = paste0("results/Fadeout_plots", '-', Sys.Date(), ".jpeg"))
   print(ggarrange(fade_prob, fade_time, ncol=2, nrow=1))
   dev.off()
   
@@ -985,10 +985,10 @@ setwd(pth)
 ################
 
 #hunt fadeout: No interaction regression 
-setwd(paste0(pth,'Disc_runs/fadeout_runs/regression/'))
+setwd(paste0(pth,'/data/'))
 single.model.fadePct = as.formula( `fadeout probability` ~ `proportion initially exposed` + `herd size`)
 lm.fadePct = lm(single.model.fadePct, data = as.data.frame(scale(fade_data_m)))
-write.csv(lm.fadePct, file=paste0("lmOutput_FadePct_", infType, Sys.Date(), ".csv"), row.names = F)
+write.csv((lm.fadePct), file=paste0("lmOutput_FadePct_", infType, Sys.Date(), ".csv"), row.names = F)
 summary(lm.fadePct)
 tab_model(lm.fadePct, file = paste0("reg_FadePct_", infType, Sys.Date(), ".doc"))
 setwd(pth)

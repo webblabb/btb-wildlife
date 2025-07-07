@@ -1,7 +1,7 @@
 # ================================
 rm(list = ls()) #clear workspace for memory
-setwd(dirname(getActiveDocumentContext()$path))
-source(file = "bTBwl_func.R")
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+source(file = "R/bTBwl_func.R")
 
 run_pipeline <- function(type, years, infType, runtype, pct, prop_superSpreader, reps, sizes, pth, scaled_plots) {
   initialize_environment()

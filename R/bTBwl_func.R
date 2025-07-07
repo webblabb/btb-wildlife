@@ -638,73 +638,168 @@ create_directories <- function() {
     dir.create("results")
   }
 }
-run_simulation <- function(size, parameters, type = "c") {
-  setwd(parameters$pth)
-  models_res <- vector(mode = "list", length = 3)
-  
-  pars <- parameter_set_wl(
-    k = size, 
-    scenario = parameters$infType, 
-    initial_exposed = parameters$pct * size, 
-    SS_prop = parameters$prop_superSpreader,
-    start_quarter = parameters$seedQuarter, 
-    test = parameters$test_mode,
-    birth = parameters$test_birth,
-    death_h = parameters$test_death_h,
-    death_n = parameters$test_death_n,
-    disease = parameters$test_disease,
-    verbose = parameters$verbose
-  )
-  
-  X0_full <- c(S = as.integer(pars["S_0"]), E = as.integer(pars["E1_0"]), I = as.integer(pars["I_0"]), 
-               sS = as.integer(pars["SuperS_0"]), sE = as.integer(pars["SuperE1_0"]), sI = as.integer(pars["SuperI_0"]))
-  
-  tic <- Sys.time()
-  out <- ode(func = SEI_model_full, y = X0_full, times = parameters$times, parms = pars, method = "rk4") %>%
-    as.data.frame()
-  toc <- Sys.time()
-  print(toc - tic)
-  
-  out$N <- out$S + out$E + out$I + out$sS + out$sE + out$sI
-  data <- out %>% gather(variable, value, -time)
-  data$value[is.nan(data$value)] <- 0 
-  data$value[which(data$value < 0)] <- 0
-  
-  initial_state <- data.frame(S_0 = pars["S_0"], E1_0 = pars["E1_0"], I_0 = pars["I_0"], SuperS_0 = pars["SuperS_0"], SuperE1_0 = pars["SuperE1_0"], SuperI_0 = pars["SuperI_0"])
-  population_parameters <- data.frame(K = pars["K"], eta_hunt = pars["eta_hunt"], eta_nat = pars["eta_nat"], theta = pars["theta"], gamma = pars["gamma"], alpha_max = pars["alpha_max"], ksi = pars["ksi"], omega = pars["omega"], s = pars["s"], alpha = pars["alpha"]) 
-  disease_parameters <- data.frame(beta = pars["beta"], area = pars["area"], p1 = pars["p1"], p2_q1 = pars["p2_q1"], p2_q2 = pars["p2_q2"], p2_q3 = pars["p2_q3"], p2_q4 = pars["p2_q4"], phi = pars["phi"], sigma1_mean = pars["sigma1_mean"], sigma1_rate = pars["sigma1_rate"])
-  
-  param_vals <- data.frame(merge(population_parameters, disease_parameters))
-  
-  if (type %in% c('discrete','Discrete', 'D', 'd')) {
-    #get lambda
-    tic = Sys.time()
-    sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = 5, seed_quarter = as.integer(pars["start_q"]), parameters$verbose, batch_name = "test", type = 'c')
-    toc = Sys.time()
-    print(toc-tic)
-    lambda_out <- getLambda_vec(data = sto_out, type = 'max')
-    remove(sto_out)
-    
-    #run
-    tic = Sys.time()
-    sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), verbose = parameters$verbose, batch_name = "test", type = type, lambda = lambda_out*parameters$lambda_factor, integrate_type = parameters$type_of_integral)
-    toc = Sys.time()
-    print(toc-tic)
-    data_sto <- sto_out[,c("rep", "tstep", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
-  } else {
-    tic <- Sys.time()
-    sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), verbose = parameters$verbose, batch_name = "test", type = type)
-    toc <- Sys.time()
-    print(toc - tic)
-    data_sto <- sto_out[, c("rep", "tstep", "time", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
-  }
-  
-  models_res[[1]] <- as.data.frame(data)
-  models_res[[2]] <- as.data.frame(sto_out)
-  models_res[[3]] <- as.data.frame(data_sto)
-  
-  models_res
-}
+
+# run_simulation <- function(size, parameters, type = "c", solve_ode = FALSE, lambda_years = 3, data_out = "all") {
+#   setwd(parameters$pth)
+#   models_res <- vector(mode = "list", length = 3)
+#   
+#   pars <- parameter_set_wl(
+#     k = size, 
+#     scenario = parameters$infType, 
+#     initial_exposed = parameters$pct, # needs to be a number not a proporiton 
+#     SS_prop = parameters$prop_superSpreader,
+#     start_quarter = parameters$seedQuarter, 
+#     test = parameters$test_mode,
+#     birth = parameters$test_birth,
+#     death_h = parameters$test_death_h,
+#     death_n = parameters$test_death_n,
+#     disease = parameters$test_disease,
+#     verbose = parameters$verbose
+#   )
+#   
+#   X0_full <- c(S = as.integer(pars["S_0"]), E = as.integer(pars["E1_0"]), I = as.integer(pars["I_0"]), 
+#                sS = as.integer(pars["SuperS_0"]), sE = as.integer(pars["SuperE1_0"]), sI = as.integer(pars["SuperI_0"]))
+#   
+#   
+#   if (solve_ode == TRUE) {
+#     tic <- Sys.time()
+#     out <- ode(func = SEI_model_full, y = X0_full, times = parameters$times, parms = pars, method = "rk4") %>%
+#       as.data.frame()
+#     toc <- Sys.time()
+#     print(toc - tic)
+#     
+#     out$N <- out$S + out$E + out$I + out$sS + out$sE + out$sI
+#     data <- out %>% gather(variable, value, -time)
+#     data$value[is.nan(data$value)] <- 0 
+#     data$value[which(data$value < 0)] <- 0 
+#   }
+#   
+#   initial_state <- data.frame(S_0 = pars["S_0"], E1_0 = pars["E1_0"], I_0 = pars["I_0"], SuperS_0 = pars["SuperS_0"], SuperE1_0 = pars["SuperE1_0"], SuperI_0 = pars["SuperI_0"])
+#   population_parameters <- data.frame(K = pars["K"], eta_hunt = pars["eta_hunt"], eta_nat = pars["eta_nat"], theta = pars["theta"], gamma = pars["gamma"], alpha_max = pars["alpha_max"], ksi = pars["ksi"], omega = pars["omega"], s = pars["s"], alpha = pars["alpha"]) 
+#   disease_parameters <- data.frame(beta = pars["beta"], area = pars["area"], p1 = pars["p1"], p2_q1 = pars["p2_q1"], p2_q2 = pars["p2_q2"], p2_q3 = pars["p2_q3"], p2_q4 = pars["p2_q4"], phi = pars["phi"], sigma1_mean = pars["sigma1_mean"], sigma1_rate = pars["sigma1_rate"])
+#   
+#   param_vals <- data.frame(merge(population_parameters, disease_parameters))
+#   
+#   if (type %in% c('discrete','Discrete', 'D', 'd')) {
+#     #get lambda
+#     tic = Sys.time()
+#     sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = lambda_years, seed_quarter = as.integer(pars["start_q"]), parameters$verbose, batch_name = "test", type = 'c')
+#     toc = Sys.time()
+#     print(toc-tic)
+#     lambda_out <- getLambda_vec(data = sto_out, type = 'max')
+#     remove(sto_out)
+#     
+#     #run
+#     tic = Sys.time()
+#     sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state,
+#                               nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), 
+#                               verbose = parameters$verbose, batch_name = "test", type = type, 
+#                               lambda = lambda_out*parameters$lambda_factor, integrate_type = parameters$type_of_integral)
+#     toc = Sys.time()
+#     print(toc-tic)
+#     data_sto <- sto_out[,c("rep", "tstep", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
+#   } else {
+#     tic <- Sys.time()
+#     sto_out <- wildlife_model(n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, nyears = parameters$years, seed_quarter = as.integer(pars["start_q"]), verbose = parameters$verbose, batch_name = "test", type = type)
+#     toc <- Sys.time()
+#     print(toc - tic)
+#     data_sto <- sto_out[, c("rep", "tstep", "time", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
+#   }
+#   
+#   if (data_out == "all" && solve_ode == TRUE) {
+#     models_res[[1]] <- as.data.frame(data)
+#     models_res[[2]] <- as.data.frame(sto_out)
+#     models_res[[3]] <- as.data.frame(data_sto)
+#     remove(data, sto_out, data_sto)
+#   } else if (data_out == "all" && solve_ode == FALSE) {
+#     models_res[[1]] <- as.data.frame(sto_out)
+#     models_res[[2]] <- as.data.frame(data_sto)
+#     remove(sto_out, data_sto)
+#   } else if (data_out == "long" && solve_ode == TRUE) {
+#     models_res[[1]] <- as.data.frame(data)
+#     models_res[[2]] <- as.data.frame(data_sto)
+#     remove(data, sto_out, data_sto)
+#   } else if (data_out == "long" && solve_ode == FALSE) {
+#     models_res[[1]] <- as.data.frame(data_sto)
+#     remove(sto_out, data_sto)
+#   }
+#   
+#   gc()
+#   
+#   return(models_res)
+# }
+
+# run_simulation <- function(size, parameters, type = "c", solve_ode = FALSE, lambda_years = 3, data_out = "all") {
+#   setwd(parameters$pth)
+#   
+#   pars <- parameter_set_wl(
+#     k = size, 
+#     scenario = parameters$infType, 
+#     initial_exposed = parameters$pct, 
+#     SS_prop = parameters$prop_superSpreader,
+#     start_quarter = parameters$seedQuarter, 
+#     test = parameters$test_mode,
+#     birth = parameters$test_birth,
+#     death_h = parameters$test_death_h,
+#     death_n = parameters$test_death_n,
+#     disease = parameters$test_disease,
+#     verbose = parameters$verbose
+#   )
+#   
+#   X0_full <- as.integer(pars[c("S_0", "E1_0", "I_0", "SuperS_0", "SuperE1_0", "SuperI_0")])
+#   names(X0_full) <- c("S", "E", "I", "sS", "sE", "sI")
+#   
+#   if (solve_ode) {
+#     out <- ode(func = SEI_model_full, y = X0_full, times = parameters$times, parms = pars, method = "rk4") %>%
+#       as_tibble() %>%
+#       mutate(N = S + E + I + sS + sE + sI) %>%
+#       pivot_longer(cols = -time, names_to = "variable", values_to = "value") %>%
+#       mutate(value = pmax(value, 0, na.rm = TRUE))  # Ensure no negative values
+#   }
+#   
+#   initial_state <- as_tibble(pars[c("S_0", "E1_0", "I_0", "SuperS_0", "SuperE1_0", "SuperI_0")])
+#   population_parameters <- as_tibble(pars[c("K", "eta_hunt", "eta_nat", "theta", "gamma", "alpha_max", "ksi", "omega", "s", "alpha")])
+#   disease_parameters <- as_tibble(pars[c("beta", "area", "p1", "p2_q1", "p2_q2", "p2_q3", "p2_q4", "phi", "sigma1_mean", "sigma1_rate")])
+#   param_vals <- bind_cols(population_parameters, disease_parameters)
+#   
+#   if (tolower(type) %in% c("d", "discrete")) {
+#     lambda_out <- wildlife_model(
+#       n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, 
+#       nyears = lambda_years, seed_quarter = pars["start_q"], 
+#       verbose = parameters$verbose, batch_name = "test", type = 'c'
+#     ) %>%
+#       getLambda_vec(type = 'max')
+#     
+#     sto_out <- wildlife_model(
+#       n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, 
+#       nyears = parameters$years, seed_quarter = pars["start_q"], 
+#       verbose = parameters$verbose, batch_name = "test", type = type, 
+#       lambda = lambda_out * parameters$lambda_factor, integrate_type = parameters$type_of_integral
+#     )
+#   } else {
+#     sto_out <- wildlife_model(
+#       n_reps = parameters$reps, parameters = param_vals, initial_state = initial_state, 
+#       nyears = parameters$years, seed_quarter = pars["start_q"], 
+#       verbose = parameters$verbose, batch_name = "test", type = type
+#     )
+#   }
+#   
+#   data_sto <- sto_out %>%
+#     select(rep, tstep, contains(c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"))) %>%
+#     pivot_longer(cols = -c(rep, tstep), names_to = "variable", values_to = "value")
+#   
+#   models_res <- list(
+#     "all" = list(if (solve_ode) out else NULL, sto_out, data_sto),
+#     "long" = list(if (solve_ode) out else NULL, data_sto)
+#   )[[data_out]]
+#   
+#   rm(list = c("sto_out", "data_sto", "out"))
+#   gc()
+#   
+#   return(models_res)
+# }
+
+
 # run_simulation <- function(size, parameters) {
 #   setwd(parameters$pth)
 #   models_res <- vector(mode = "list", length = 3)
@@ -999,7 +1094,7 @@ save_results <- function(models_res, parameters, size) {
 
 run_pipeline <- function(type, years, infType, runtype, pct, prop_superSpreader, reps, size, pth, scaled_plots, gen_plots = T, save_runs = T) {
   parameters <- setup_parameters(years, infType, runtype, pct, prop_superSpreader, reps, size, pth)
-  models_res <- run_simulation(size, parameters, type)
+  models_res <- run_simulation(size = size, parameters, type)
   if (gen_plots == T) {
     plots <- generate_plots(models_res = models_res, parameters = parameters, size = size, type = type, scaled = scaled_plots)
   }
@@ -1010,3 +1105,126 @@ run_pipeline <- function(type, years, infType, runtype, pct, prop_superSpreader,
   
   return(models_res)
 }
+
+run_simulation <- function(
+    size, nyears = 1, infType = "default", runtype = "sim", 
+    pct = 0.1, prop_superSpreader = 0.05, reps = 100, pth = getwd(), 
+    type = "c", solve_ode = FALSE, lambda_years = 3, data_out = "all",
+    seedQuarter = 1, lambda_factor = 1.2, type_of_integral = 3, 
+    verbose = 0, save_runs = TRUE, save_plots = TRUE, 
+    test_mode = FALSE
+) {
+  
+  # Compute dependent parameters
+  times <- seq(0, nyears * 12, by = 12 / 365)
+  name_out <- paste0(runtype, infType, "_", pct, '-', prop_superSpreader, '-', size, '-', Sys.Date())
+  
+  # Get model parameters
+  pars <- parameter_set_wl(
+    k = size, scenario = infType, initial_exposed = pct, 
+    SS_prop = prop_superSpreader, start_quarter = seedQuarter, 
+    test = test_mode
+  )
+  
+  # Initial states
+  X0_full <- c(
+    S = as.integer(pars["S_0"]), E = as.integer(pars["E1_0"]), I = as.integer(pars["I_0"]), 
+    sS = as.integer(pars["SuperS_0"]), sE = as.integer(pars["SuperE1_0"]), sI = as.integer(pars["SuperI_0"])
+  )
+  
+  # Solve ODE if required
+  if (solve_ode) {
+    data <- ode(func = SEI_model_full, y = X0_full, times = times, parms = pars, method = "rk4") %>%
+      as.data.frame()
+    data$N <- rowSums(data[, c("S", "E", "I", "sS", "sE", "sI")])
+  }
+  
+  initial_state <- data.frame(S_0 = pars["S_0"], E1_0 = pars["E1_0"], I_0 = pars["I_0"], SuperS_0 = pars["SuperS_0"], SuperE1_0 = pars["SuperE1_0"], SuperI_0 = pars["SuperI_0"])
+  population_parameters <- data.frame(K = pars["K"], eta_hunt = pars["eta_hunt"], eta_nat = pars["eta_nat"], theta = pars["theta"], gamma = pars["gamma"], alpha_max = pars["alpha_max"], ksi = pars["ksi"], omega = pars["omega"], s = pars["s"], alpha = pars["alpha"]) 
+  disease_parameters <- data.frame(beta = pars["beta"], area = pars["area"], p1 = pars["p1"], p2_q1 = pars["p2_q1"], p2_q2 = pars["p2_q2"], p2_q3 = pars["p2_q3"], p2_q4 = pars["p2_q4"], phi = pars["phi"], sigma1_mean = pars["sigma1_mean"], sigma1_rate = pars["sigma1_rate"])
+  
+  param_vals <- data.frame(merge(population_parameters, disease_parameters))
+  
+  # Run stochastic model with special handling for discrete types
+  if (type %in% c('discrete', 'Discrete', 'D', 'd')) {
+    #get lambda
+    tic = Sys.time()
+    sto_out <- wildlife_model(n_reps = reps, parameters = param_vals, initial_state = initial_state, 
+                              nyears = lambda_years, seed_quarter = as.integer(pars["start_q"]), verbose, 
+                              batch_name = "test", type = 'c')
+    toc = Sys.time()
+    print(toc-tic)
+    lambda_out <- getLambda_vec(data = sto_out, type = 'max')
+    remove(sto_out)
+    
+    #run
+    tic = Sys.time()
+    sto_out <- wildlife_model(n_reps = reps, parameters = param_vals, initial_state = initial_state,
+                              nyears = nyears, seed_quarter = as.integer(pars["start_q"]), 
+                              verbose = verbose, batch_name = "test", type = type, 
+                              lambda = lambda_out*lambda_factor, integrate_type = type_of_integral)
+    toc = Sys.time()
+    print(toc-tic)
+    
+    if (data_out != "wide") {
+      data_sto <- sto_out[,c("rep", "tstep", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% 
+        pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
+    }
+  } else {
+    tic <- Sys.time()
+    sto_out <- wildlife_model(n_reps = reps, parameters = param_vals, initial_state = initial_state, nyears = nyears, seed_quarter = as.integer(pars["start_q"]), verbose = verbose, batch_name = "test", type = type)
+    toc <- Sys.time()
+    print(toc - tic)
+    
+    if (data_out != "wide") {
+      data_sto <- sto_out[, c("rep", "tstep", "time", "N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I")] %>% 
+        pivot_longer(cols = c("N", "S", "SS_S", "E1", "SS_E1", "I", "SS_I"), names_to = "variable", values_to = "value")
+    }
+  }
+  
+  if (data_out == "all" && solve_ode == TRUE) {
+    model_res <- list(data_ode = data, 
+                      sto_out = sto_out, 
+                      data_sto = data_sto)
+    
+    # if (save_plots) {
+    #   
+    # }
+    # models_res[[1]] <- as.data.frame(data)
+    # models_res[[2]] <- as.data.frame(sto_out)
+    # models_res[[3]] <- as.data.frame(data_sto)
+    remove(data, sto_out, data_sto)
+  } else if (data_out == "all" && solve_ode == FALSE) {
+    model_res <- list(sto_out = sto_out, data_sto = data_sto)
+    # models_res[[1]] <- as.data.frame(sto_out)
+    # models_res[[2]] <- as.data.frame(data_sto)
+    remove(sto_out, data_sto)
+  } else if (data_out == "long" && solve_ode == TRUE) {
+    model_res <- list(data_ode = data, 
+                      data_sto = data_sto)
+    # models_res[[1]] <- as.data.frame(data)
+    # models_res[[2]] <- as.data.frame(data_sto)
+    remove(data, data_sto)
+  } else if (data_out == "long" && solve_ode == FALSE) {
+    model_res <- list(data_sto = data_sto)
+    # models_res[[1]] <- as.data.frame(data_sto)
+    remove(sto_out, data_sto)
+  } else if (data_out == "wide" && solve_ode == FALSE) {
+    model_res <- list(sto_out = sto_out)
+    # models_res[[1]] <- as.data.frame(sto_out)
+    remove(sto_out)
+  } else if (data_out == "wide" && solve_ode == TRUE) {
+    model_res <- list(data_ode = data, 
+                      sto_out = sto_out)
+    # models_res[[1]] <- as.data.frame(data)
+    # models_res[[2]] <- as.data.frame(sto_out)
+    remove(data, sto_out)
+  }
+  
+  if (save_runs) {
+    save(model_out, file = paste0('data/', name_out, '.RData'))
+  }
+  
+  return(model_res)
+}
+
