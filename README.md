@@ -1,7 +1,7 @@
 # bTB Wildlife Models Repository
 
 ## Introduction
-This repository contains code to run bTB (bovine Tuberculosis) Wildlife Models and generate figures for the manuscript titled "Manuscript title...".
+This repository contains code to run bTB (bovine Tuberculosis) Wildlife Models and generate figures for the manuscript titled "Stochastic modeling of bovine tuberculosis dynamics in white-tailed deer".
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
