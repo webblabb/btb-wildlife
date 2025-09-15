@@ -277,50 +277,29 @@ p_vals <- data.frame(parameters = parameters)
 # 1. create model; 2. run model, 3. save model output
 TruPrev <- bTB_wl_scaled[ c(parameters, response[1]) ]
 prcc.TruPrev <- epi.prcc(TruPrev, sided.test = 2)
-write.csv( prcc.TruPrev, file = paste0("transSensitivityPRCC_truPrev_", infType,".csv"), row.names = F )
+write.csv( prcc.TruPrev, file = paste0("data/transSensitivityPRCC_truPrev_", infType,".csv"), row.names = F )
 p_vals$TruPrev <- prcc.TruPrev$p.value
-#p_vals$min <- prcc.TruPrev$p.value
-
 
 #fadeout PRCC model
 Fadeout <- bTB_wl_scaled[c(parameters, response[2])]
 prcc.Fadeout<-epi.prcc(Fadeout, sided.test = 2)
-write.csv( prcc.Fadeout, file = paste0("transSensitivityPRCC_fadeout_", infType,".csv"), row.names = F )
+write.csv( prcc.Fadeout, file = paste0("data/transSensitivityPRCC_fadeout_", infType,".csv"), row.names = F )
 p_vals$Fadeout <- prcc.Fadeout$p.value
-#p_vals$min <- pmin(p_vals$min, prcc.Fadeout$p.value)
-#p_vals$max <- pmax(p_vals$min, prcc.Fadeout$p.value)
-
 
 #True prevalence PRCC model
 FadeoutTime <- bTB_wl_scaled[ c(parameters, response[3]) ]
 prcc.FadeoutTime <- epi.prcc(FadeoutTime, sided.test = 2)
-write.csv( prcc.FadeoutTime, file = paste0("transSensitivityPRCC_truPrev_", infType,".csv"), row.names = F )
+write.csv( prcc.FadeoutTime, file = paste0("data/transSensitivityPRCC_truPrev_", infType,".csv"), row.names = F )
 p_vals$FadeoutTime <- prcc.FadeoutTime$p.value
-#p_vals$min <- pmin(p_vals$min, prcc.FadeoutTime$p.value)
-#p_vals$max <- pmax(p_vals$max, prcc.FadeoutTime$p.value)
 
 #fadeout PRCC model
 HuntPrev <- bTB_wl_scaled[c(parameters, response[4])]
 prcc.HuntPrev <- epi.prcc(HuntPrev, sided.test = 2)
-write.csv( prcc.HuntPrev, file = paste0("transSensitivityPRCC_fadeout_", infType,".csv"), row.names = F )
+write.csv( prcc.HuntPrev, file = paste0("data/transSensitivityPRCC_fadeout_", infType,".csv"), row.names = F )
 p_vals$HuntPrev <- prcc.HuntPrev$p.value
-#p_vals$min <- pmin(p_vals$min, prcc.HuntPrev$p.value)
-#p_vals$max <- pmax(p_vals$max, prcc.HuntPrev$p.value)
 
 #Plots
 parameter_names <- c('carrying.capacity','hunt.mortality','base.mortality','dens.dep.asymetry','dens.dep.mortality','max.birth.rate','proportion.SS','birth.timing','birth.duration','transmission.rate','SS.contact.factor','latency.mean','latency.rate')
-
-# parameter_names <- as.expression(c('carrying.capacity (K)', paste('hunt.mortality (', expression(eta),')'), paste('base.mortality (', expression(eta),')'), 
-#                                    paste('dens.dep.asymetry (', expression(theta),')'), paste('dens.dep.mortality (', expression(gamma),')'),
-#                                    'max.birth.rate (A)', paste('prop.SS (', expression(xi),')'), paste('birth.timing (', expression(omega),')'), 'birth.duration (s)',
-#                                    paste('trans.rate (', expression(beta),')'), paste('SS.contact.factor (', expression(phi),')'), 
-#                                    paste('latency.mean (', expression(sigma),')'), paste('latency.rate (', expression(sigma),')'))) %>% as.vector()
-
-#Setting the order of the parameter
-#prcc.TruPrev$parameters <- parameters
-#prcc.Fadeout$parameters <- parameters
-#prcc.FadeoutTime$parameters <- parameters
-#prcc.HuntPrev$parameters <- parameters
 
 #Setting the order of the parameter
 prcc.TruPrev$parameters <- parameter_names
@@ -405,7 +384,7 @@ p_vals_lm <- data.frame(parameters = parameter_names)
 #TruPrev: No interaction regression 
 single.model.TruPrev = update.formula(single.model, `Total Infected` ~ .)
 lm.TruPrev.PRCC = lm(single.model.TruPrev, data = bTB_wl_scaled)
-write.csv(tidy(lm.TruPrev.PRCC), file=paste0("lmOutputTruPrev_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.TruPrev.PRCC), file=paste0("data/lmOutputTruPrev_", infType, ".csv"), row.names = F)
 summary(lm.TruPrev.PRCC)
 tab_model(lm.TruPrev.PRCC)
 
@@ -423,7 +402,7 @@ p_vals_lm$TruPrev <- summary(lm.TruPrev.PRCC)$coefficients[-1,4]
 #Fadeout: No interaction regression 
 single.model.Fadeout = update.formula(single.model, fadeout ~ .)
 lm.Fadeout.PRCC = lm(single.model.Fadeout, data = bTB_wl_scaled)
-write.csv(tidy(lm.Fadeout.PRCC), file=paste0("lmOutputFadeout_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.Fadeout.PRCC), file=paste0("data/lmOutputFadeout_", infType, ".csv"), row.names = F)
 summary(lm.Fadeout.PRCC)
 tab_model(lm.Fadeout.PRCC)
 
@@ -440,7 +419,7 @@ p_vals_lm$Fadeout <- summary(lm.Fadeout.PRCC)$coefficients[-1,4]
 #Fadeout Time: No interaction regression 
 single.model.FadeoutTime = update.formula(single.model, `fadeout time` ~ .)
 lm.FadeoutTime.PRCC = lm(single.model.FadeoutTime, data = bTB_wl_scaled)
-write.csv(tidy(lm.FadeoutTime.PRCC), file=paste0("lmOutputFadeoutTime_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.FadeoutTime.PRCC), file=paste0("data/lmOutputFadeoutTime_", infType, ".csv"), row.names = F)
 summary(lm.FadeoutTime.PRCC)
 tab_model(lm.FadeoutTime.PRCC)
 
@@ -457,7 +436,7 @@ p_vals_lm$FadeoutTime <- summary(lm.FadeoutTime.PRCC)$coefficients[-1,4]
 #Hunt Prevalence: No interaction regression 
 single.model.HuntPrev = update.formula(single.model, `Hunt Prevalence` ~ .)
 lm.HuntPrev.PRCC = lm(single.model.HuntPrev, data = bTB_wl_scaled)
-write.csv(tidy(lm.HuntPrev.PRCC), file=paste0("lmOutputHuntPrev_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.HuntPrev.PRCC), file=paste0("data/lmOutputHuntPrev_", infType, ".csv"), row.names = F)
 summary(lm.HuntPrev.PRCC)
 tab_model(lm.HuntPrev.PRCC)
 
