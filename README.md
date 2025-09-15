@@ -1,11 +1,6 @@
-# bTB Wildlife Models Repository
+# Code associated with Stochastic modeling of bovine tuberculosis dynamics in white-tailed deer
 
-## Introduction
-This repository contains code to run bTB (bovine Tuberculosis) Wildlife Models and generate figures for the manuscript titled "Stochastic modeling of bovine tuberculosis dynamics in white-tailed deer".
-
-## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+pipeline.R runs all simulations and pub_plots.R generates all figures in the manuscript.
 
 ## Contact
-For questions, please contact:
-- [Lindsay Beck-Johnson](mailto:L.Beck-Johnson@colostate.edu)
+Please contact [Lindsay Beck-Johnson](mailto:L.Beck-Johnson@colostate.edu) with any questions.
