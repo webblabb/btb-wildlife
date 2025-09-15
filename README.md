@@ -8,6 +8,8 @@ We find that the probability of developing an endemic disease state depends on t
 
 Preventive measures to reduce spillover events should be implemented given the low probability of fadeout in wildlife. Physical boundaries such as increased fencing and covered storage of feed and water troughs may reduce transmission potential via livestock-wildlife contact, possibly lowering bTB prevalence in both species. Although prevalence estimates from hunter harvest may be imperfect, change between years could be used as a tool to identify outbreaks or evaluate intervention effectiveness.
 
+# How to use
+
 pipeline.R runs all simulations and pub_plots.R generates all figures in the manuscript.
 
 ## Contact
