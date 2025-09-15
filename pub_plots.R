@@ -256,6 +256,143 @@ setwd(pth)
 # Sensitivity analysis plot
 bTB_wl_scaled<-R_scaled
 
+###########
+##  PRCC ##
+###########
+bTB_wl_scaled <- bTB_wl_scaled[,!(names(bTB_wl_scaled) %in% c('N', "pars", "S_0", "E1_0", "SuperS_0", "SuperE1_0", "I_0", "SuperI_0"))]
+names(bTB_wl_scaled) <- c('Total Infected', 'fadeout', 'fadeout time', 'Hunt Prevalence', 
+                          'K', 'eta_hunt', 'eta_nat', 'theta', 'gamma', 
+                          'alpha_max', 'ksi', 'omega', 's', 
+                          'beta', 'p2_q1', 'p2_q2', 'p2_q3', 'p2_q4', 'phi', 'sigma1_mean', 'sigma1_rate', 
+                          'start_q')
+library(epiR)
+response <- c('Total Infected','fadeout','fadeout time','Hunt Prevalence')
+parameters <- names(bTB_wl_scaled[,!is.na(bTB_wl_scaled[1,])])
+parameters <- parameters[!(parameters %in% response)]
+parmeters_sig <- parameters
+p_vals <- data.frame(parameters = parameters)
+
+# setwd('./data/raw/')
+#True prevalence PRCC model
+# 1. create model; 2. run model, 3. save model output
+TruPrev <- bTB_wl_scaled[ c(parameters, response[1]) ]
+prcc.TruPrev <- epi.prcc(TruPrev, sided.test = 2)
+write.csv( prcc.TruPrev, file = paste0("transSensitivityPRCC_truPrev_", infType,".csv"), row.names = F )
+p_vals$TruPrev <- prcc.TruPrev$p.value
+#p_vals$min <- prcc.TruPrev$p.value
+
+
+#fadeout PRCC model
+Fadeout <- bTB_wl_scaled[c(parameters, response[2])]
+prcc.Fadeout<-epi.prcc(Fadeout, sided.test = 2)
+write.csv( prcc.Fadeout, file = paste0("transSensitivityPRCC_fadeout_", infType,".csv"), row.names = F )
+p_vals$Fadeout <- prcc.Fadeout$p.value
+#p_vals$min <- pmin(p_vals$min, prcc.Fadeout$p.value)
+#p_vals$max <- pmax(p_vals$min, prcc.Fadeout$p.value)
+
+
+#True prevalence PRCC model
+FadeoutTime <- bTB_wl_scaled[ c(parameters, response[3]) ]
+prcc.FadeoutTime <- epi.prcc(FadeoutTime, sided.test = 2)
+write.csv( prcc.FadeoutTime, file = paste0("transSensitivityPRCC_truPrev_", infType,".csv"), row.names = F )
+p_vals$FadeoutTime <- prcc.FadeoutTime$p.value
+#p_vals$min <- pmin(p_vals$min, prcc.FadeoutTime$p.value)
+#p_vals$max <- pmax(p_vals$max, prcc.FadeoutTime$p.value)
+
+#fadeout PRCC model
+HuntPrev <- bTB_wl_scaled[c(parameters, response[4])]
+prcc.HuntPrev <- epi.prcc(HuntPrev, sided.test = 2)
+write.csv( prcc.HuntPrev, file = paste0("transSensitivityPRCC_fadeout_", infType,".csv"), row.names = F )
+p_vals$HuntPrev <- prcc.HuntPrev$p.value
+#p_vals$min <- pmin(p_vals$min, prcc.HuntPrev$p.value)
+#p_vals$max <- pmax(p_vals$max, prcc.HuntPrev$p.value)
+
+#Plots
+parameter_names <- c('carrying.capacity','hunt.mortality','base.mortality','dens.dep.asymetry','dens.dep.mortality','max.birth.rate','proportion.SS','birth.timing','birth.duration','transmission.rate','SS.contact.factor','latency.mean','latency.rate')
+
+# parameter_names <- as.expression(c('carrying.capacity (K)', paste('hunt.mortality (', expression(eta),')'), paste('base.mortality (', expression(eta),')'), 
+#                                    paste('dens.dep.asymetry (', expression(theta),')'), paste('dens.dep.mortality (', expression(gamma),')'),
+#                                    'max.birth.rate (A)', paste('prop.SS (', expression(xi),')'), paste('birth.timing (', expression(omega),')'), 'birth.duration (s)',
+#                                    paste('trans.rate (', expression(beta),')'), paste('SS.contact.factor (', expression(phi),')'), 
+#                                    paste('latency.mean (', expression(sigma),')'), paste('latency.rate (', expression(sigma),')'))) %>% as.vector()
+
+#Setting the order of the parameter
+#prcc.TruPrev$parameters <- parameters
+#prcc.Fadeout$parameters <- parameters
+#prcc.FadeoutTime$parameters <- parameters
+#prcc.HuntPrev$parameters <- parameters
+
+#Setting the order of the parameter
+prcc.TruPrev$parameters <- parameter_names
+prcc.Fadeout$parameters <- parameter_names
+prcc.FadeoutTime$parameters <- parameter_names
+prcc.HuntPrev$parameters <- parameter_names
+
+
+#ordering the number infected results by gamma value, and setting all other models to match the order of the number infected model
+prcc.TruPrev <- prcc.TruPrev[order(prcc.TruPrev$est),]
+prcc.Fadeout <- prcc.Fadeout[order(match(prcc.Fadeout$parameters,prcc.TruPrev$parameters)),]
+prcc.FadeoutTime <- prcc.FadeoutTime[order(match(prcc.FadeoutTime$parameters,prcc.TruPrev$parameters)),]
+prcc.HuntPrev <- prcc.HuntPrev[order(match(prcc.HuntPrev$parameters,prcc.TruPrev$parameters)),]
+p_vals <- p_vals[order(match(p_vals$parameters,prcc.TruPrev$parameters)),]
+
+prcc.trans <- cbind(TruPrev = prcc.TruPrev, Fadeout = prcc.Fadeout$est, FadeoutTime = prcc.FadeoutTime$est, HuntPrev = prcc.HuntPrev$est)
+prcc.trans <- prcc.trans[order(prcc.trans$TruPrev.est),]
+
+
+
+prcc.trans <- prcc.trans[,c("TruPrev.est", "TruPrev.parameters", "Fadeout", "FadeoutTime", "HuntPrev")]
+prcc.trans.long <- melt(prcc.trans, id = c("TruPrev.parameters"))
+
+p_vals.long <- melt(p_vals, id = c("parameters"))
+
+colnames(prcc.trans.long)[1] <- "parameters"
+prcc.trans.long$parameters2 <- factor(prcc.trans.long$parameters, levels = prcc.trans$TruPrev.parameters)
+prcc.trans.long$time_ordered = factor(prcc.trans.long$variable, levels=c('TruPrev.est','Fadeout', 'FadeoutTime', 'HuntPrev'))
+
+
+#Renaming facets
+variable_names <- list(
+  "TruPrev.est" = "True Prevalence",
+  "Fadeout" = "Fadeout",
+  "FadeoutTime" = "Fadeout Time" ,
+  "HuntPrev" = "Observed Prevalence"
+)
+
+variable_labeller <- function(variable,value){
+  return(variable_names[value])
+}
+
+
+significant=F
+if(significant){
+  prcc.trans.long$value[p_vals.long$value >= .05] <- NA
+}
+
+blue<-c('#2171b5')
+#plot PRCC results
+
+sens <- ggplot() + 
+  theme_bw() + 
+  theme(legend.position = "none", axis.text.y = element_text(size = 14),  axis.title.x = element_text(size = 14)) +
+  geom_col(data = prcc.trans.long, aes(y = value, x = parameters2, fill=blue)) +
+  #scale_x_discrete(position = "top") +
+  #scale_y_discrete(limits=c(0, 0.25, 0.5), expand=c(0.02,0.02)) +
+  scale_y_discrete(limits=c(-1, -.5, 0, .5, 1)) +
+  labs(y = NULL, x = NULL) + 
+  coord_flip() + 
+  facet_grid(~time_ordered, labeller= variable_labeller) +
+  scale_fill_manual(values = blue) + 
+  theme(panel.spacing.y = unit(1.5, "lines")) + 
+  theme(strip.text = element_text(size = 12)) 
+sens <- annotate_figure(sens, top = text_grob("PRCC Analysis", 
+                                              color = "black", face = "bold", size = 18))
+sens
+
+jpeg(filename = paste0("figures/PRCC_Trans_", infType,".jpeg"), width = 1440, height = 840, units = 'px', res = 100)
+print(sens)
+dev.off()
+
 ####################
 ## Logistic Model ##
 ####################
@@ -286,7 +423,7 @@ p_vals_lm$TruPrev <- summary(lm.TruPrev.PRCC)$coefficients[-1,4]
 #Fadeout: No interaction regression 
 single.model.Fadeout = update.formula(single.model, fadeout ~ .)
 lm.Fadeout.PRCC = lm(single.model.Fadeout, data = bTB_wl_scaled)
-write.csv(lm.Fadeout.PRCC, file=paste0("lmOutputFadeout_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.Fadeout.PRCC), file=paste0("lmOutputFadeout_", infType, ".csv"), row.names = F)
 summary(lm.Fadeout.PRCC)
 tab_model(lm.Fadeout.PRCC)
 
@@ -303,7 +440,7 @@ p_vals_lm$Fadeout <- summary(lm.Fadeout.PRCC)$coefficients[-1,4]
 #Fadeout Time: No interaction regression 
 single.model.FadeoutTime = update.formula(single.model, `fadeout time` ~ .)
 lm.FadeoutTime.PRCC = lm(single.model.FadeoutTime, data = bTB_wl_scaled)
-write.csv(lm.FadeoutTime.PRCC, file=paste0("lmOutputFadeoutTime_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.FadeoutTime.PRCC), file=paste0("lmOutputFadeoutTime_", infType, ".csv"), row.names = F)
 summary(lm.FadeoutTime.PRCC)
 tab_model(lm.FadeoutTime.PRCC)
 
@@ -320,7 +457,7 @@ p_vals_lm$FadeoutTime <- summary(lm.FadeoutTime.PRCC)$coefficients[-1,4]
 #Hunt Prevalence: No interaction regression 
 single.model.HuntPrev = update.formula(single.model, `Hunt Prevalence` ~ .)
 lm.HuntPrev.PRCC = lm(single.model.HuntPrev, data = bTB_wl_scaled)
-write.csv(lm.HuntPrev.PRCC, file=paste0("lmOutputHuntPrev_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.HuntPrev.PRCC), file=paste0("lmOutputHuntPrev_", infType, ".csv"), row.names = F)
 summary(lm.HuntPrev.PRCC)
 tab_model(lm.HuntPrev.PRCC)
 
@@ -383,11 +520,12 @@ reg <- ggplot() +
   theme(legend.position = "none", axis.text.y = element_text(size = 14),  axis.title.x = element_text(size = 14)) +
   geom_col(data = lmScale.long, aes(y = value, x = parameters2, fill = blue)) + 
   scale_y_discrete(limits=c(-1, -.5, 0, .5, 1)) +
+  labs(y = NULL, x = NULL) + 
   coord_flip() + 
   facet_grid(~time_ordered, labeller= variable_labeller) +
-  scale_fill_manual (values = blue) + 
+  scale_fill_manual(values = blue) + 
   theme(panel.spacing.y = unit(1.5, "lines")) + 
-  theme(strip.text = element_text(size = 12))
+  theme(strip.text = element_text(size = 12)) 
 reg <- annotate_figure(reg, top = text_grob("Regression Analysis", 
                                             color = "black", face = "bold", size = 18))
 reg
@@ -397,4 +535,8 @@ reg
 dev.off()
 
 
+jpeg(filename = paste0("figures/sens_plot.jpeg"), width = 1440, height = 840, units = 'px', res = 100)
+ggarrange(sens, reg,nrow = 2)
+dev.off()
 ####################
+
