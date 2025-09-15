@@ -8,8 +8,8 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 source(file = "bTBwl_func.R")
 
 # Compile C++ code
-system("g++ -L/usr/lib/x86_64-linux-gnu bTB_wildlifeModel_DTMC.cpp -lgsl -lgslcblas -lm -o wl_model_DTMC.exe")
-system("g++ -L/usr/lib/x86_64-linux-gnu bTB_wildlifeModel_CTMC.cpp -lgsl -lgslcblas -lm -o wl_model_CTMC.exe")
+system("g++ -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_DTMC.cpp -lgsl -lgslcblas -lm -o wl_model_DTMC.exe")
+system("g++ -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_CTMC.cpp -lgsl -lgslcblas -lm -o wl_model_CTMC.exe")
 
 # ===============================
 # Fadeout runs simulation Settings

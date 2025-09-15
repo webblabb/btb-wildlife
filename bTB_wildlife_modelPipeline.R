@@ -4,6 +4,13 @@
 ##########################################################################################
 ##########################################################################################
 
+# Compile C++ code
+system("g++ -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_DTMC.cpp -lgsl -lgslcblas -lm -o wl_model_DTMC.exe")
+system("g++ -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_CTMC.cpp -lgsl -lgslcblas -lm -o wl_model_CTMC.exe")
+
+system("g++ -fopenmp -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_DTMC.cpp -lgsl -lgslcblas -lm -o wl_model_DTMC.exe")
+system("g++ -fopenmp -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_CTMC.cpp -lgsl -lgslcblas -lm -o wl_model_CTMC.exe")
+
 ####################
 ## Initialization ##
 ####################
@@ -26,20 +33,22 @@ pth = getwd() #"/home/webblab/Documents/Brandon/bTB_wildlife_code/" #path to mai
 test_mode = F; test_birth = F; test_death_n = F; test_death_h = F; test_disease = F;
 save_runs = T #T if runs should be saved to the appropriate folder
 save_plots = T #T if plots should be saved to the appropriate folder.
-n.cores <- floor( detectCores()*(3/4) ) #flexible core determination
+n.cores <- floor( detectCores()-2 ) #flexible core determination
 cl<-makeCluster(n.cores)
 registerDoParallel(cl)
-clusterEvalQ(cl, { 
-  library(deSolve); 
-  library(tidyverse);
-  library(ggplot2);
-  library(ggpubr);
-  library(grid);
-  library(rstudioapi);
-  library(foreach);
-  library(doParallel);
-  library(RColorBrewer);
-  library(scales); })
+clusterEvalQ(cl, {
+  library(deSolve)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(grid)
+  library(rstudioapi)
+  library(foreach)
+  library(doParallel)
+  library(RColorBrewer)
+  library(scales)
+  source("R/bTBwl_func.R")
+})
 #####################
 
 foreach(i = 1:length(sizes)) %dopar% {
@@ -47,7 +56,7 @@ foreach(i = 1:length(sizes)) %dopar% {
   ## Runs ##
   ##########
   
-  setwd(pth)
+  # setwd(pth)
   models_res <- vector(mode = "list", length = 3) # storage for single herd size results - deterministic, true stochastic, and formatted stochastic data
   
   size=as.integer(sizes[i])
@@ -115,6 +124,7 @@ foreach(i = 1:length(sizes)) %dopar% {
   models_res[[3]] <- as.data.frame(data_sto)
   remove(data_sto)
   
+  gc()
   ##########
   
   
@@ -177,21 +187,17 @@ foreach(i = 1:length(sizes)) %dopar% {
     scale_y_continuous(limits = c(0,NA)) +
     scale_x_continuous(breaks=seq(0,years*12,12), limits = c(0, years*12))
   
-  print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol=2, nrow=3))
-  print(Nplot)
+  # print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol=2, nrow=3))
+  # print(Nplot)
   
   if(save_plots){
-    setwd(paste0(pth,"/results/"))
-    
-    jpeg(filename = paste0("cont_Rplot_class_", name_out, size, '-', Sys.Date(), ".jpeg"))
+    jpeg(filename = paste0("figures/cont_Rplot_class_", name_out, size, '-', Sys.Date(), ".jpeg"))
     print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol=2, nrow=3))
     dev.off()
     
-    jpeg(filename = paste0("cont_Rplot_N_", name_out, size, '-', Sys.Date(), ".jpeg"))
+    jpeg(filename = paste0("figures/cont_Rplot_N_", name_out, size, '-', Sys.Date(), ".jpeg"))
     print(Nplot)
     dev.off()
-    
-    setwd(pth)
   }
   remove(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, Nplot)
   ###########
@@ -202,13 +208,13 @@ foreach(i = 1:length(sizes)) %dopar% {
   ##################
   
   if(save_runs){
-    setwd(paste0(pth,"/data/"))
-    
-    save( models_res, file = paste0('cont_', name_out, size, '-', Sys.Date(), '.RData'))
+    save( models_res, file = paste0('data/raw/cont_', name_out, size, '-', Sys.Date(), '.RData'))
   }
   remove(models_res) #clear from workspace
   ##################
-  
+ 
+  gc()
+   
 }
 
 stopCluster(cl)
@@ -241,20 +247,22 @@ save_runs = T
 save_plots = T
 test_mode = F; test_birth = F; test_death_n = F; test_death_h = F; test_disease = F;
 verbose = 0 #verbose of -1 forces a .25 month timestep maximum
-n.cores <- floor( detectCores()*(3/4) ) #flexible core determination
+n.cores <- floor( detectCores()-2 ) #flexible core determination
 cl<-makeCluster(n.cores)
 registerDoParallel(cl)
-clusterEvalQ(cl, { 
-  library(deSolve); 
-  library(tidyverse);
-  library(ggplot2);
-  library(ggpubr);
-  library(grid);
-  library(rstudioapi);
-  library(foreach);
-  library(doParallel);
-  library(RColorBrewer);
-  library(scales); })
+clusterEvalQ(cl, {
+  library(deSolve)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(grid)
+  library(rstudioapi)
+  library(foreach)
+  library(doParallel)
+  library(RColorBrewer)
+  library(scales)
+  source("R/bTBwl_func.R")
+})
 #####################
 foreach(i = 1:length(sizes)) %dopar% {
   
@@ -262,7 +270,7 @@ foreach(i = 1:length(sizes)) %dopar% {
   ## Runs ##
   ##########
   
-  setwd(pth)
+  # setwd(pth)
   lambda_res <- vector(mode = "list", length = 2) # storage for single herd size results - deterministic, true stochastic, and formatted stochastic data
   lambda_out <- vector(mode = "list", length = 1)
   
@@ -330,15 +338,15 @@ foreach(i = 1:length(sizes)) %dopar% {
   if(save_plots){
     #setwd(paste0(pth, "lambda_preSim/lambda_plots/"))
     
-    jpeg(filename = paste0("lambda_preSim_Rplot_LambdaVec_", name_out, size, ".jpeg"))
+    jpeg(filename = paste0("figures/lambda_preSim_Rplot_LambdaVec_", name_out, size, ".jpeg"))
     print(lambdaVec_plot)
     dev.off()
     
-    jpeg(filename = paste0("lambda_preSim_Rplot_LambdaVal_", name_out, size, ".jpeg"))
+    jpeg(filename = paste0("figures/lambda_preSim_Rplot_LambdaVal_", name_out, size, ".jpeg"))
     print(ggarrange(lambdaVal_plot, lambdaVal_plot2, ncol=1, nrow=2))
     dev.off()
     
-    setwd(pth)
+    # setwd(pth)
   }
   remove(lambdaVec_plot, lambdaVal_plot, lambdaVal_plot2)
   ###########
@@ -349,16 +357,16 @@ foreach(i = 1:length(sizes)) %dopar% {
   ##################
   
   if(save_runs){
-    setwd(paste0(pth, "lambda_preSim/"))
+    # setwd(paste0(pth, "lambda_preSim/"))
     
-    save( lambda_res, file = paste0( name_out, size, '-', Sys.Date(), '.RData'))
-    save( lambda_out, file = paste0('vals_', name_out, size, '.RData'))
+    save( lambda_res, file = paste0("data/raw/lambda_preSim_",name_out, size, '-', Sys.Date(), '.RData'))
+    save( lambda_out, file = paste0('data/raw/vals_', name_out, size, '.RData'))
     
-    setwd(pth)
+    # setwd(pth)
   }
   remove(lambda_res) #clear from workspace
   ##################
-  
+  gc()
 }
 
 stopCluster(cl)
@@ -375,7 +383,7 @@ stopCluster(cl)
 ####################
 rm(list = ls())
 setwd(dirname(getActiveDocumentContext()$path))
-source(file = "bTBwl_func.R")
+source(file = "R/bTBwl_func.R")
 years = 7
 scaled = T
 #times = seq(from=0, to=years*12, by=12/365) #daily time steps
@@ -397,20 +405,22 @@ pth = "/home/webblab/Documents/Brandon/bTB_wildlife_code/" #path to main directo
 test_mode = F; test_birth = F; test_death_n = F; test_death_h = F; test_disease = F;
 save_runs = T
 save_plots = T
-n.cores <- floor( detectCores()*(3/4) ) #flexible core determination
+n.cores <- floor( detectCores()-2 ) #flexible core determination
 cl<-makeCluster(n.cores)
 registerDoParallel(cl)
-clusterEvalQ(cl, { 
-  library(deSolve); 
-  library(tidyverse);
-  library(ggplot2);
-  library(ggpubr);
-  library(grid);
-  library(rstudioapi);
-  library(foreach);
-  library(doParallel);
-  library(RColorBrewer);
-  library(scales); })
+clusterEvalQ(cl, {
+  library(deSolve)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(grid)
+  library(rstudioapi)
+  library(foreach)
+  library(doParallel)
+  library(RColorBrewer)
+  library(scales)
+  source("R/bTBwl_func.R")
+})
 #####################
 
 foreach(i = 1:length(sizes)) %dopar% {
@@ -418,7 +428,7 @@ foreach(i = 1:length(sizes)) %dopar% {
   ## Runs ##
   ##########
   
-  setwd(pth)
+  # setwd(pth)
   models_res <- vector(mode = "list", length = 3) # storage for single herd size results - deterministic, true stochastic, and formatted stochastic data
   
   size=as.integer(sizes[i])
@@ -631,11 +641,11 @@ foreach(i = 1:length(sizes)) %dopar% {
     plot_scl <- annotate_figure(plot_scl, top = text_grob("Discrete time stochastic model outbreak trajectories", 
                                           color = "black", face = "bold", size = 18))
     
-    jpeg(filename = paste0("results/disc_Rplot_class_", name_out, size, '-', Sys.Date(), ".jpeg"))
+    jpeg(filename = paste0("figures/disc_Rplot_class_", name_out, size, '-', Sys.Date(), ".jpeg"))
     print(plot)
     dev.off()
     
-    jpeg(filename = paste0("results/disc_Rplot_class_scl_", name_out, size, '-', Sys.Date(), ".jpeg"))
+    jpeg(filename = paste0("figures/disc_Rplot_class_scl_", name_out, size, '-', Sys.Date(), ".jpeg"))
     print(plot_scl)
     dev.off()
     
@@ -644,7 +654,7 @@ foreach(i = 1:length(sizes)) %dopar% {
     #dev.off()
     
     remove(plot, plot_scl)
-    setwd(pth)
+    # setwd(pth)
   }
   remove(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, Nplot)
   ###########
@@ -655,7 +665,7 @@ foreach(i = 1:length(sizes)) %dopar% {
   ##################
   
   if(save_runs){
-    save( models_res, file = paste0('Disc_runs/', name_out, size, '-', Sys.Date(), '.RData'))
+    save( models_res, file = paste0('data/raw/disc_', name_out, size, '-', Sys.Date(), '.RData'))
   }
   remove(models_res) #clear from workspace
   ##################
@@ -676,7 +686,7 @@ stopCluster(cl)
 #takes about 8 min to run 20x21
 rm(list = ls())
 setwd(dirname(getActiveDocumentContext()$path))
-source(file = "bTBwl_func.R")
+source(file = "R/bTBwl_func.R")
 years = 20
 times = seq(from=0, to=years*12, by=12/365) #daily time steps
 seedQuarter = 1
@@ -697,20 +707,22 @@ save_plots = F
 save_plots_final = T
 fade_data = matrix(data = NA, nrow = length(sizes), ncol = length(pct))
 fadeTime_data = matrix(data = NA, nrow = length(sizes), ncol = length(pct))
-n.cores <- floor( detectCores()*(3/4) ) #flexible core determination
+n.cores <- floor( detectCores()-2 ) #flexible core determination
 cl<-makeCluster(n.cores)
 registerDoParallel(cl)
-clusterEvalQ(cl, { 
-  library(deSolve); 
-  library(tidyverse);
-  library(ggplot2);
-  library(ggpubr);
-  library(grid);
-  library(rstudioapi);
-  library(foreach);
-  library(doParallel);
-  library(RColorBrewer);
-  library(scales); })
+clusterEvalQ(cl, {
+  library(deSolve)
+  library(tidyverse)
+  library(ggplot2)
+  library(ggpubr)
+  library(grid)
+  library(rstudioapi)
+  library(foreach)
+  library(doParallel)
+  library(RColorBrewer)
+  library(scales)
+  source("R/bTBwl_func.R")
+})
 #####################
 
 R <- foreach(i = 1:length(sizes), .combine='cbind', .inorder=TRUE) %dopar% {
@@ -724,7 +736,7 @@ R <- foreach(i = 1:length(sizes), .combine='cbind', .inorder=TRUE) %dopar% {
     ## Runs ##
     ##########
     
-    setwd(pth)
+    #setwd(pth)
     size=as.integer(sizes[i])
     pars <- parameter_set_wl(k = size, 
                              scenario = infType, 
@@ -850,17 +862,17 @@ R <- foreach(i = 1:length(sizes), .combine='cbind', .inorder=TRUE) %dopar% {
         scale_y_continuous(limits = c(0,NA)) +
         scale_x_continuous(breaks=seq(0,years*12,12), limits = c(0, years*12))
       
-      setwd(paste0(pth, "Disc_runs/fadeout_runs/validation_plots/"))
+      # setwd(paste0(pth, "Disc_runs/fadeout_runs/validation_plots/"))
       
-      jpeg(filename = paste0("Rplot_class_", name_out, size, '-', Sys.Date(), ".jpeg"))
+      jpeg(filename = paste0("figures/Rplot_class_", name_out, size, '-', Sys.Date(), ".jpeg"))
       print(ggarrange(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, ncol=2, nrow=3))
       dev.off()
       
-      jpeg(filename = paste0("Rplot_N_", name_out, size, '-', Sys.Date(), ".jpeg"))
+      jpeg(filename = paste0("figures/Rplot_N_", name_out, size, '-', Sys.Date(), ".jpeg"))
       print(Nplot)
       dev.off()
       
-      setwd(pth)
+      # setwd(pth)
       remove(Splot, SSSplot, Eplot, ESSplot, Iplot, ISSplot, Nplot, det_by_class, sto_by_class, data, data_sto)
       
     }
@@ -879,7 +891,7 @@ R <- foreach(i = 1:length(sizes), .combine='cbind', .inorder=TRUE) %dopar% {
   if(save_runs){
     name = c(paste0('data_over_ranges',i))
     assign(x=name, value = data_over_ranges)
-    save( list = name[1], file = paste0('Disc_runs/fadeout_runs/FO_dat',  size, '-', Sys.Date(), '.RData'))
+    save( list = name[1], file = paste0('data/raw/fadeout_dat',  size, '-', Sys.Date(), '.RData'))
   }
   
   ##################
@@ -2224,7 +2236,7 @@ setwd(pth)
 rm(list = ls())
 library(rstudioapi);
 setwd(dirname(getActiveDocumentContext()$path))
-source(file = "bTBwl_func.R")
+source(file = "R/bTBwl_func.R")
 N_LHS_sets = 1000
 size_range = c(50,1000)
 years = 4
@@ -2246,7 +2258,7 @@ save_pars = T
 save_runs = T
 save_plots = F
 save_plots_final = T
-recalc = F
+recalc = T
 averaged = T
 ##parameters excluded from analysis: 
 # omega - birth pulse timing, verbose, integral type
@@ -2265,7 +2277,7 @@ if(recalc){
                     SS_prop = prop_superSpreader,
                     verbose = 0,
                     Num_LHS_sets = N_LHS_sets,
-                    file.path = '/home/webblab/Documents/Brandon/bTB_wildlife_code/sensitivity_analysis/parameters/',
+                    file.path = "data/", #'/home/webblab/Documents/Brandon/bTB_wildlife_code/sensitivity_analysis/parameters/',
                     file.out = save_pars,
                     file.name = par_file,
                     seed_q = fix_q,
@@ -2345,7 +2357,7 @@ R <- foreach(i = 1:dim(lh)[1], .combine='rbind', .inorder=TRUE) %dopar% {
   print(toc-tic)
   remove(initial_state,population_parameters,disease_parameters,param_vals)
   if(save_runs){
-    write.csv(sto_out, file = paste0('./sensitivity_analysis/sens_runs/sens_run_',infType, '_', i, '.csv'))
+    write.csv(sto_out, file = paste0('./data/raw/sens_run_',infType, '_', i, '.csv'))
   }
   
   # mean hunt prev
@@ -2383,10 +2395,12 @@ bTB_wl_scaled <- as.data.frame(R %>% mutate_at(vars('K', 'eta_hunt', 'eta_nat', 
                                         'phi', 'sigma1_mean', 'sigma1_rate', 'start_q'),
                                    list(~scale(as.vector(.)))))
 
+bTB_wl_scaled <- read_csv(paste0("/home/webblab/Desktop/btb-wildlife/data/LHS_scaled_summary_", "seeded_q1", ".csv" ))
+
 # save summary file and rescaled summary
-write.csv(R, file = paste0("./sensitivity_analysis/summary_files/LHS_summary_", infType, ".csv" ), row.names = F)
+write.csv(R, file = paste0("./data/LHS_summary_", infType, ".csv" ), row.names = F)
 remove(R)
-write.csv(bTB_wl_scaled, file = paste0("./sensitivity_analysis/summary_files/LHS_scaled_summary_", infType, ".csv" ), row.names = F)
+write.csv(bTB_wl_scaled, file = paste0("./data/LHS_scaled_summary_", infType, ".csv" ), row.names = F)
 #########################################
 
 #####################
@@ -2402,7 +2416,7 @@ if( ("bTB_wl_scaled" %in% ls()) ){
   print('found in workspace')
 }else if( paste0('LHS_scaled_summary_', infType, '.csv') %in% list.files("./sensitivity_analysis/summary_files/") ){
   print('loading from file')
-  bTB_wl_scaled <- read.csv(file = paste0('./sensitivity_analysis/summary_files/LHS_scaled_summary_', infType, '.csv'))
+  bTB_wl_scaled <- read.csv(file = paste0('./data/LHS_scaled_summary_', infType, '.csv'))
 }
 mono_plots = F
 bTB_wl_scaled <- bTB_wl_scaled[,!(names(bTB_wl_scaled) %in% c('N', "pars", "S_0", "E1_0", "SuperS_0", "SuperE1_0", "I_0", "SuperI_0"))]
@@ -2417,12 +2431,12 @@ if(averaged){
   bTB_wl_agg <- bTB_wl_agg[,names(bTB_wl_agg) %in% names(bTB_wl_scaled)]
   bTB_wl_scaled <- bTB_wl_agg
   infType <- paste0(infType, '_avg')
-  write.csv(bTB_wl_scaled, file = paste0("./sensitivity_analysis/summary_files/LHS_scaled_summary_", infType, ".csv" ), row.names = F)
+  write.csv(bTB_wl_scaled, file = paste0("./data/LHS_scaled_summary_", infType, ".csv" ), row.names = F)
 }
 # dont expand - just run it...
 #####################
 
-setwd('./sensitivity_analysis/monotonic_plots/')
+setwd('./figures/monotonicity/')
 if(mono_plots){
 jpeg(filename = paste0("monotonic_K_", infType, ".jpeg"), width =840, height = 840, units = 'px', res = 100)
 
@@ -2844,14 +2858,20 @@ setwd(pth)
 ###########
 ##  PRCC ##
 ###########
+bTB_wl_scaled <- bTB_wl_scaled[,!(names(bTB_wl_scaled) %in% c('N', "pars", "S_0", "E1_0", "SuperS_0", "SuperE1_0", "I_0", "SuperI_0"))]
+names(bTB_wl_scaled) <- c('Total Infected', 'fadeout', 'fadeout time', 'Hunt Prevalence', 
+                          'K', 'eta_hunt', 'eta_nat', 'theta', 'gamma', 
+                          'alpha_max', 'ksi', 'omega', 's', 
+                          'beta', 'p2_q1', 'p2_q2', 'p2_q3', 'p2_q4', 'phi', 'sigma1_mean', 'sigma1_rate', 
+                          'start_q')
 library(epiR)
 response <- c('Total Infected','fadeout','fadeout time','Hunt Prevalence')
 parameters <- names(bTB_wl_scaled[,!is.na(bTB_wl_scaled[1,])])
 parameters <- parameters[!(parameters %in% response)]
 parmeters_sig <- parameters
-p_vals <- data.frame(parameters = parameter_names)
+p_vals <- data.frame(parameters = parameters)
 
-setwd('./sensitivity_analysis/PRCC_results/')
+# setwd('./data/raw/')
 #True prevalence PRCC model
 # 1. create model; 2. run model, 3. save model output
 TruPrev <- bTB_wl_scaled[ c(parameters, response[1]) ]
@@ -2943,7 +2963,7 @@ variable_labeller <- function(variable,value){
 }
 
 
-significant=T
+significant=F
 if(significant){
   prcc.trans.long$value[p_vals.long$value >= .05] <- NA
 }
@@ -2968,7 +2988,7 @@ sens <- annotate_figure(sens, top = text_grob("PRCC Analysis",
                                                       color = "black", face = "bold", size = 18))
 sens
 
-jpeg(filename = paste0("PRCC_Trans_", infType,".jpeg"), width = 1440, height = 840, units = 'px', res = 100)
+jpeg(filename = paste0("figures/PRCC_Trans_", infType,".jpeg"), width = 1440, height = 840, units = 'px', res = 100)
   print(sens)
 dev.off()
 
@@ -2984,7 +3004,7 @@ p_vals_lm <- data.frame(parameters = parameter_names)
 #TruPrev: No interaction regression 
 single.model.TruPrev = update.formula(single.model, `Total Infected` ~ .)
 lm.TruPrev.PRCC = lm(single.model.TruPrev, data = bTB_wl_scaled)
-write.csv(lm.TruPrev.PRCC, file=paste0("lmOutputTruPrev_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.TruPrev.PRCC), file=paste0("lmOutputTruPrev_", infType, ".csv"), row.names = F)
 summary(lm.TruPrev.PRCC)
 tab_model(lm.TruPrev.PRCC)
 
@@ -3002,7 +3022,7 @@ p_vals_lm$TruPrev <- summary(lm.TruPrev.PRCC)$coefficients[-1,4]
 #Fadeout: No interaction regression 
 single.model.Fadeout = update.formula(single.model, fadeout ~ .)
 lm.Fadeout.PRCC = lm(single.model.Fadeout, data = bTB_wl_scaled)
-write.csv(lm.Fadeout.PRCC, file=paste0("lmOutputFadeout_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.Fadeout.PRCC), file=paste0("lmOutputFadeout_", infType, ".csv"), row.names = F)
 summary(lm.Fadeout.PRCC)
 tab_model(lm.Fadeout.PRCC)
 
@@ -3019,7 +3039,7 @@ p_vals_lm$Fadeout <- summary(lm.Fadeout.PRCC)$coefficients[-1,4]
 #Fadeout Time: No interaction regression 
 single.model.FadeoutTime = update.formula(single.model, `fadeout time` ~ .)
 lm.FadeoutTime.PRCC = lm(single.model.FadeoutTime, data = bTB_wl_scaled)
-write.csv(lm.FadeoutTime.PRCC, file=paste0("lmOutputFadeoutTime_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.FadeoutTime.PRCC), file=paste0("lmOutputFadeoutTime_", infType, ".csv"), row.names = F)
 summary(lm.FadeoutTime.PRCC)
 tab_model(lm.FadeoutTime.PRCC)
 
@@ -3036,7 +3056,7 @@ p_vals_lm$FadeoutTime <- summary(lm.FadeoutTime.PRCC)$coefficients[-1,4]
 #Hunt Prevalence: No interaction regression 
 single.model.HuntPrev = update.formula(single.model, `Hunt Prevalence` ~ .)
 lm.HuntPrev.PRCC = lm(single.model.HuntPrev, data = bTB_wl_scaled)
-write.csv(lm.HuntPrev.PRCC, file=paste0("lmOutputHuntPrev_", infType, ".csv"), row.names = F)
+write.csv(tidy(lm.HuntPrev.PRCC), file=paste0("lmOutputHuntPrev_", infType, ".csv"), row.names = F)
 summary(lm.HuntPrev.PRCC)
 tab_model(lm.HuntPrev.PRCC)
 
@@ -3099,19 +3119,23 @@ reg <- ggplot() +
   theme(legend.position = "none", axis.text.y = element_text(size = 14),  axis.title.x = element_text(size = 14)) +
   geom_col(data = lmScale.long, aes(y = value, x = parameters2, fill = blue)) + 
   scale_y_discrete(limits=c(-1, -.5, 0, .5, 1)) +
+  labs(y = NULL, x = NULL) + 
   coord_flip() + 
   facet_grid(~time_ordered, labeller= variable_labeller) +
-  scale_fill_manual (values = blue) + 
+  scale_fill_manual(values = blue) + 
   theme(panel.spacing.y = unit(1.5, "lines")) + 
-  theme(strip.text = element_text(size = 12))
+  theme(strip.text = element_text(size = 12)) 
 reg <- annotate_figure(reg, top = text_grob("Regression Analysis", 
                                               color = "black", face = "bold", size = 18))
 reg
 
-jpeg(filename = paste0("SingleModel_Trans_", infType, ".jpeg"), width = 1440, height = 840, units = 'px', res = 100)
+jpeg(filename = paste0("figures/SingleModel_Trans_", infType, ".jpeg"), width = 1440, height = 840, units = 'px', res = 100)
 reg
 dev.off()
 
 
+jpeg(filename = paste0("figures/sens_plot.jpeg"), width = 1440, height = 840, units = 'px', res = 100)
+ggarrange(sens, reg,nrow = 2)
+dev.off()
 ####################
 
