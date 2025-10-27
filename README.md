@@ -6,7 +6,7 @@
 
 sim_pipeline.R can be used to run simulations and generate figures in the main text of the manuscript. The HPC directory contains batch files and code that can be run on a high-performance computing cluster.
 
-dens_figs.R and freq_figs.R can be used to generate figures if data already exists in the data/ directory.
+dens_figs.R and freq_figs.R can be used to generate figures if data already exists in the data/ directory. If trying to generate figures for the frequency-dependent models, the frequency-dependent code must be compiled. It would be easiest to overwrite existing executables, like what is done in the shell (.sh) script in the hpc/ directory, so that no changes to the R code are necessary. Otherwise, the `system2()` command must be changed in the bTBwl_fun.R script.
 
 ## Contact
 Please contact [Sam Smith](mailto:sm.smith@colostate.edu) with any questions.
