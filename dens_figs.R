@@ -14,6 +14,7 @@ suppressPackageStartupMessages({
   library(doParallel)
   library(RColorBrewer)
   library(scales)
+  library(latex2exp)
 })
 
 source("bTBwl_func.R")
@@ -294,7 +295,6 @@ scenarios      <- c("spillover")
 results <- results %>%
   mutate(
     fadeout        = ifelse(fadeout == 0, NA_real_, fadeout),
-    # make LaTeX/plotmath style labels: eta[h]==0, eta[h]==0.5, etc.
     hunt_label = sprintf("eta[h]==%s", number(pct_hunt, accuracy = 0.01, trim = TRUE)),
     hunt_label = factor(
       hunt_label,
@@ -324,7 +324,7 @@ fade_prob_map <- ggplot(
   scale_x_continuous(expand = c(0,0), breaks = seq(0,100,25)) +
   scale_y_continuous(expand = c(0,0), breaks = seq(0,100,25)) +
   labs(
-    x = expression("% reduction in deer–deer transmission ("*beta[wild]*")"), # "% reduction in deer–deer contact (p1)",
+    x = expression("% reduction in deer–deer transmission ("*beta*")"), # "% reduction in deer–deer contact (p1)",
     y = expression("% reduction in cattle/fomite transmission ("*beta[fq]*")")
   ) +
   facet_grid( cols = vars(hunt_label),labeller = label_parsed) +
@@ -359,7 +359,7 @@ mean_prev_map <- ggplot(
   scale_x_continuous(expand = c(0,0), breaks = seq(0,100,25)) +
   scale_y_continuous(expand = c(0,0), breaks = seq(0,100,25)) +
   labs(
-    x = expression("% reduction in deer–deer transmission ("*beta[wild]*")"), # "% reduction in deer–deer contact (p1)",
+    x = expression("% reduction in deer–deer transmission ("*beta*")"), # "% reduction in deer–deer contact (p1)",
     y = expression("% reduction in cattle/fomite contacts ("*beta[fq]*")")
   ) +
   facet_grid( cols = vars(hunt_label),labeller = label_parsed) +
@@ -384,6 +384,7 @@ ggsave("figures/mean_prev_map_beta_p2_hunt.pdf", mean_prev_map, width = 12, heig
 ##-----------------------------------------------------------
 ## Sensitivity analysis
 ##-----------------------------------------------------------
+bTB_wl_scaled <- read.csv("data/LHS_scaled_summary_seeded_q1.csv")
 
 averaged = T
 mono_plots = T
