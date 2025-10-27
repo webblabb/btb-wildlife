@@ -6,7 +6,6 @@
 #include <random>
 #include <sstream>
 #include <algorithm>
-#include <omp.h>
 
 #define _USE_MATH_DEFINES
 #include <cmath>
@@ -754,7 +753,7 @@ ReplicateResult btb_wl_model_DTMC(const Parameters& p)
         double interspecific_trans_rate = p.deer_deer_contact_rate * p.transmission_rate * (double(nS+nSuperS)) * (double(nI+nSuperI) / (p.county_habitat_area));
     
         //transmission from infected farm contact
-        double farm_trans_rate = farm_contact_rate_v[current_quarter_idx] * p.transmission_rate * (nS+(p.SS_farm_contact_factor*nSuperS));
+        double farm_trans_rate =  farm_contact_rate_v[current_quarter_idx] * p.transmission_rate * (nS+(p.SS_farm_contact_factor*nSuperS));
     
         //transition
         double transition_rate = (nE1 + nSuperE1) / draw_gamma_gsl(p.sigma1_shape, p.sigma1_scale);
@@ -838,7 +837,7 @@ ReplicateResult btb_wl_model_DTMC(const Parameters& p)
                     if(verbose > 6){std::cout << "computing hunt mortality..." << std::endl;}
                     U2 = draw_uniform_gsl(0.0, 1.0);
                     if( U2 < (double(nS) / N_d) ){
-                        nS_deaths += 1; nS -= 1; }//S
+                        nS_deaths_hunt += 1; nS -= 1; }//S % SMS - changed nS_deaths to nS_deaths_hunt 8/15/2025
                     else if( U2 < (double(nS + nE1) / N_d) ){
                         nE1_deaths_hunt += 1; nE1 -= 1; }//E1
                     else if( U2 < (double(nS + nE1 + nI) / N_d) ){
@@ -1152,65 +1151,31 @@ int main(int argc, char* argv[]){
             << std::endl;
         *out_stream << bs.rdbuf();
         
-        // Prepare a buffer for each replicate (outside the loop)
-        std::vector<std::string> rep_outputs(n_reps);
-        
-        // #ifdef USE_OPENMP
-        // #pragma omp parallel for
-        // #endif
         for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          ReplicateResult res = btb_wl_model_DTMC(p);
-          std::stringstream rep_bs;
-          
-          for(int i=0; i<res.n_tsteps; ++i){
-            rep_bs << rep_i+1 << ";" //0*
-                   << i << ";" //1
-                   << res.res_n[i] << ";" //2a
-                   << res.res_Total_hunt[i] << ";"
-                   << res.res_Total_inf[i] << ";"
-                   << res.res_inf_hunt[i] << ";"
-                   << res.res_quarter[i] << ";"
-                   << res.res_FO[i] << ";"
-                   << res.res_FO_time[i] << ";"
-                   << res.res_Hunt_prev[i]
-                   << std::endl;
-          }
-          
-          // Store this replicate's output in the vector
-          rep_outputs[rep_i] = rep_bs.str();
+            
+            ReplicateResult res = btb_wl_model_DTMC(p);
+                
+            std::stringstream rep_bs;
+            
+            for(int i=0; i<res.n_tsteps; ++i){
+                    
+                rep_bs << rep_i+1 << ";" //0*
+                    << i << ";" //1
+                    << res.res_n[i] << ";" //2a
+                    << res.res_Total_hunt[i] << ";"
+                    << res.res_Total_inf[i] << ";"
+                    << res.res_inf_hunt[i] << ";"
+                    << res.res_quarter[i] << ";"
+                    << res.res_FO[i] << ";"
+                    << res.res_FO_time[i] << ";"
+                    << res.res_Hunt_prev[i]
+                    << std::endl;
+                        
+                }
+            
+            *out_stream << rep_bs.rdbuf();
+            
         }
-        
-        // After the parallel region, write all outputs in order
-        for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          *out_stream << rep_outputs[rep_i];
-        }
-        
-        // #pragma omp parallel for
-        // for(int rep_i=0; rep_i<n_reps; ++rep_i){
-        //     
-        //     ReplicateResult res = btb_wl_model_DTMC(p);
-        //         
-        //     std::stringstream rep_bs;
-        //     
-        //     for(int i=0; i<res.n_tsteps; ++i){
-        //             
-        //         rep_bs << rep_i+1 << ";" //0*
-        //             << i << ";" //1
-        //             << res.res_n[i] << ";" //2a
-        //             << res.res_Total_hunt[i] << ";"
-        //             << res.res_Total_inf[i] << ";"
-        //             << res.res_inf_hunt[i] << ";"
-        //             << res.res_quarter[i] << ";"
-        //             << res.res_FO[i] << ";"
-        //             << res.res_FO_time[i] << ";"
-        //             << res.res_Hunt_prev[i]
-        //             << std::endl;
-        //                 
-        //         }
-        //     
-        //     *out_stream << rep_bs.rdbuf();
-        //     
-        // }
     }
     else{
         //simulation peoperties
@@ -1233,206 +1198,105 @@ int main(int argc, char* argv[]){
             << "Hunt Prevalence"
             << std::endl;
         *out_stream << bs.rdbuf();
-        
-        // Create a vector to store each replicate's output
-        std::vector<std::string> rep_outputs(n_reps);
-        
-        // #ifdef USE_OPENMP
-        // #pragma omp parallel for
-        // #endif
+    
         for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          ReplicateResult res = btb_wl_model_DTMC(p);
-          std::stringstream rep_bs;
-          
-          // Only print out last timestep for sensitivity runs
-          if(p.verbose == -3){
-            int t_end = res.n_tsteps - 1;
-            rep_bs << rep_i+1 << ";" //0*
-                   << t_end << ";" //1
-                   << res.res_n[t_end] << ";" //2a
-                   << res.res_nS[t_end] << ";" //3a
-                   << res.res_nE1[t_end] << ";"//4a
-                   << res.res_nI[t_end] << ";" //5a
-                   << res.res_S_hunt[t_end] << ";" //***a
-                   << res.res_E1_hunt[t_end] << ";" //6a
-                   << res.res_I_hunt[t_end] << ";" //7a
-                   << res.res_nS_birth[t_end] << ";" //8a
-                   << res.res_nS_death[t_end] << ";" //9a
-                   << res.res_nE1_death[t_end] << ";" //10a
-                   << res.res_nI_death[t_end] << ";" //11a
-                   << res.res_trans_to_E1[t_end] << ";" //12a
-                   << res.res_trans_to_I[t_end] << ";" //13a
-                   << res.res_nSuper[t_end] << ";" //2b
-                   << res.res_nSuperS[t_end] << ";" //3b
-                   << res.res_nSuperE1[t_end] << ";"//4b
-                   << res.res_nSuperI[t_end] << ";" //5b
-                   << res.res_SuperS_hunt[t_end] << ";" //***b
-                   << res.res_SuperE1_hunt[t_end] << ";" //6b
-                   << res.res_SuperI_hunt[t_end] << ";" //7b
-                   << res.res_nSuperS_birth[t_end] << ";" //8b
-                   << res.res_nSuperS_death[t_end] << ";" //9b
-                   << res.res_nSuperE1_death[t_end] << ";" //10b
-                   << res.res_nSuperI_death[t_end] << ";" //11b
-                   << res.res_trans_to_SuperE1[t_end] << ";" //12b
-                   << res.res_trans_to_SuperI[t_end] << ";" //13b
-                   << res.res_Total_hunt[t_end] << ";"
-                   << res.res_Total_inf[t_end] << ";"
-                   << res.res_inf_hunt[t_end] << ";"
-                   << res.res_quarter[t_end] << ";"
-                   << res.res_FO[t_end] << ";"
-                   << res.res_FO_time[t_end] << ";"
-                   << res.res_Hunt_prev[t_end]
-                   << std::endl;
-          }
-          // Otherwise print entire replicate as normal
-          else{
-            for(int i=0; i<res.n_tsteps; ++i){
-              rep_bs << rep_i+1 << ";" //0*
-                     << i << ";" //1
-                     << res.res_n[i] << ";" //2a
-                     << res.res_nS[i] << ";" //3a
-                     << res.res_nE1[i] << ";"//4a
-                     << res.res_nI[i] << ";" //5a
-                     << res.res_S_hunt[i] << ";" //***a
-                     << res.res_E1_hunt[i] << ";" //6a
-                     << res.res_I_hunt[i] << ";" //7a
-                     << res.res_nS_birth[i] << ";" //8a
-                     << res.res_nS_death[i] << ";" //9a
-                     << res.res_nE1_death[i] << ";" //10a
-                     << res.res_nI_death[i] << ";" //11a
-                     << res.res_trans_to_E1[i] << ";" //12a
-                     << res.res_trans_to_I[i] << ";" //13a
-                     << res.res_nSuper[i] << ";" //2b
-                     << res.res_nSuperS[i] << ";" //3b
-                     << res.res_nSuperE1[i] << ";"//4b
-                     << res.res_nSuperI[i] << ";" //5b
-                     << res.res_SuperS_hunt[i] << ";" //***b
-                     << res.res_SuperE1_hunt[i] << ";" //6b
-                     << res.res_SuperI_hunt[i] << ";" //7b
-                     << res.res_nSuperS_birth[i] << ";" //8b
-                     << res.res_nSuperS_death[i] << ";" //9b
-                     << res.res_nSuperE1_death[i] << ";" //10b
-                     << res.res_nSuperI_death[i] << ";" //11b
-                     << res.res_trans_to_SuperE1[i] << ";" //12b
-                     << res.res_trans_to_SuperI[i] << ";" //13b
-                     << res.res_Total_hunt[i] << ";"
-                     << res.res_Total_inf[i] << ";"
-                     << res.res_inf_hunt[i] << ";"
-                     << res.res_quarter[i] << ";"
-                     << res.res_FO[i] << ";"
-                     << res.res_FO_time[i] << ";"
-                     << res.res_Hunt_prev[i]
-                     << std::endl;
+            
+            ReplicateResult res = btb_wl_model_DTMC(p);
+                
+            std::stringstream rep_bs;
+            
+            //only print out last timestep for sensitivity runs
+            if(p.verbose == -3){
+                int t_end = res.n_tsteps - 1;
+                rep_bs << rep_i+1 << ";" //0*
+                << t_end << ";" //1
+                
+                << res.res_n[t_end] << ";" //2a
+                << res.res_nS[t_end] << ";" //3a
+                << res.res_nE1[t_end] << ";"//4a
+                << res.res_nI[t_end] << ";" //5a
+                << res.res_S_hunt[t_end] << ";" //***a
+                << res.res_E1_hunt[t_end] << ";" //6a
+                << res.res_I_hunt[t_end] << ";" //7a
+                << res.res_nS_birth[t_end] << ";" //8a
+                << res.res_nS_death[t_end] << ";" //9a
+                << res.res_nE1_death[t_end] << ";" //10a
+                << res.res_nI_death[t_end] << ";" //11a
+                << res.res_trans_to_E1[t_end] << ";" //12a
+                << res.res_trans_to_I[t_end] << ";" //13a
+                
+                << res.res_nSuper[t_end] << ";" //2b
+                << res.res_nSuperS[t_end] << ";" //3b
+                << res.res_nSuperE1[t_end] << ";"//4b
+                << res.res_nSuperI[t_end] << ";" //5b
+                << res.res_SuperS_hunt[t_end] << ";" //***b
+                << res.res_SuperE1_hunt[t_end] << ";" //6b
+                << res.res_SuperI_hunt[t_end] << ";" //7b
+                << res.res_nSuperS_birth[t_end] << ";" //8b
+                << res.res_nSuperS_death[t_end] << ";" //9b
+                << res.res_nSuperE1_death[t_end] << ";" //10b
+                << res.res_nSuperI_death[t_end] << ";" //11b
+                << res.res_trans_to_SuperE1[t_end] << ";" //12b
+                << res.res_trans_to_SuperI[t_end] << ";" //13b
+                    
+                << res.res_Total_hunt[t_end] << ";"
+                << res.res_Total_inf[t_end] << ";"
+                << res.res_inf_hunt[t_end] << ";"
+                << res.res_quarter[t_end] << ";"
+                << res.res_FO[t_end] << ";"
+                << res.res_FO_time[t_end] << ";"
+                << res.res_Hunt_prev[t_end]
+                << std::endl;
             }
-          }
-          // Store this replicate's output in the vector
-          rep_outputs[rep_i] = rep_bs.str();
+            //otherwise print entire replicate as normal
+            else{
+                for(int i=0; i<res.n_tsteps; ++i){
+                    
+                    rep_bs << rep_i+1 << ";" //0*
+                    << i << ";" //1
+                    
+                    << res.res_n[i] << ";" //2a
+                    << res.res_nS[i] << ";" //3a
+                    << res.res_nE1[i] << ";"//4a
+                    << res.res_nI[i] << ";" //5a
+                    << res.res_S_hunt[i] << ";" //***a
+                    << res.res_E1_hunt[i] << ";" //6a
+                    << res.res_I_hunt[i] << ";" //7a
+                    << res.res_nS_birth[i] << ";" //8a
+                    << res.res_nS_death[i] << ";" //9a
+                    << res.res_nE1_death[i] << ";" //10a
+                    << res.res_nI_death[i] << ";" //11a
+                    << res.res_trans_to_E1[i] << ";" //12a
+                    << res.res_trans_to_I[i] << ";" //13a
+                    
+                    << res.res_nSuper[i] << ";" //2b
+                    << res.res_nSuperS[i] << ";" //3b
+                    << res.res_nSuperE1[i] << ";"//4b
+                    << res.res_nSuperI[i] << ";" //5b
+                    << res.res_SuperS_hunt[i] << ";" //***b
+                    << res.res_SuperE1_hunt[i] << ";" //6b
+                    << res.res_SuperI_hunt[i] << ";" //7b
+                    << res.res_nSuperS_birth[i] << ";" //8b
+                    << res.res_nSuperS_death[i] << ";" //9b
+                    << res.res_nSuperE1_death[i] << ";" //10b
+                    << res.res_nSuperI_death[i] << ";" //11b
+                    << res.res_trans_to_SuperE1[i] << ";" //12b
+                    << res.res_trans_to_SuperI[i] << ";" //13b
+                        
+                    << res.res_Total_hunt[i] << ";"
+                    << res.res_Total_inf[i] << ";"
+                    << res.res_inf_hunt[i] << ";"
+                    << res.res_quarter[i] << ";"
+                    << res.res_FO[i] << ";"
+                    << res.res_FO_time[i] << ";"
+                    << res.res_Hunt_prev[i]
+                    << std::endl;
+                        
+                }
+            }
+            *out_stream << rep_bs.rdbuf();
+            
         }
-        
-        // After the parallel section, write all buffers in order
-        for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          *out_stream << rep_outputs[rep_i];
-        }
-        
-        // #pragma omp parallel for
-        // for(int rep_i=0; rep_i<n_reps; ++rep_i){
-        //     
-        //     ReplicateResult res = btb_wl_model_DTMC(p);
-        //         
-        //     std::stringstream rep_bs;
-        //     
-        //     //only print out last timestep for sensitivity runs
-        //     if(p.verbose == -3){
-        //         int t_end = res.n_tsteps - 1;
-        //         rep_bs << rep_i+1 << ";" //0*
-        //         << t_end << ";" //1
-        //         
-        //         << res.res_n[t_end] << ";" //2a
-        //         << res.res_nS[t_end] << ";" //3a
-        //         << res.res_nE1[t_end] << ";"//4a
-        //         << res.res_nI[t_end] << ";" //5a
-        //         << res.res_S_hunt[t_end] << ";" //***a
-        //         << res.res_E1_hunt[t_end] << ";" //6a
-        //         << res.res_I_hunt[t_end] << ";" //7a
-        //         << res.res_nS_birth[t_end] << ";" //8a
-        //         << res.res_nS_death[t_end] << ";" //9a
-        //         << res.res_nE1_death[t_end] << ";" //10a
-        //         << res.res_nI_death[t_end] << ";" //11a
-        //         << res.res_trans_to_E1[t_end] << ";" //12a
-        //         << res.res_trans_to_I[t_end] << ";" //13a
-        //         
-        //         << res.res_nSuper[t_end] << ";" //2b
-        //         << res.res_nSuperS[t_end] << ";" //3b
-        //         << res.res_nSuperE1[t_end] << ";"//4b
-        //         << res.res_nSuperI[t_end] << ";" //5b
-        //         << res.res_SuperS_hunt[t_end] << ";" //***b
-        //         << res.res_SuperE1_hunt[t_end] << ";" //6b
-        //         << res.res_SuperI_hunt[t_end] << ";" //7b
-        //         << res.res_nSuperS_birth[t_end] << ";" //8b
-        //         << res.res_nSuperS_death[t_end] << ";" //9b
-        //         << res.res_nSuperE1_death[t_end] << ";" //10b
-        //         << res.res_nSuperI_death[t_end] << ";" //11b
-        //         << res.res_trans_to_SuperE1[t_end] << ";" //12b
-        //         << res.res_trans_to_SuperI[t_end] << ";" //13b
-        //             
-        //         << res.res_Total_hunt[t_end] << ";"
-        //         << res.res_Total_inf[t_end] << ";"
-        //         << res.res_inf_hunt[t_end] << ";"
-        //         << res.res_quarter[t_end] << ";"
-        //         << res.res_FO[t_end] << ";"
-        //         << res.res_FO_time[t_end] << ";"
-        //         << res.res_Hunt_prev[t_end]
-        //         << std::endl;
-        //     }
-        //     //otherwise print entire replicate as normal
-        //     else{
-        //         for(int i=0; i<res.n_tsteps; ++i){
-        //             
-        //             rep_bs << rep_i+1 << ";" //0*
-        //             << i << ";" //1
-        //             
-        //             << res.res_n[i] << ";" //2a
-        //             << res.res_nS[i] << ";" //3a
-        //             << res.res_nE1[i] << ";"//4a
-        //             << res.res_nI[i] << ";" //5a
-        //             << res.res_S_hunt[i] << ";" //***a
-        //             << res.res_E1_hunt[i] << ";" //6a
-        //             << res.res_I_hunt[i] << ";" //7a
-        //             << res.res_nS_birth[i] << ";" //8a
-        //             << res.res_nS_death[i] << ";" //9a
-        //             << res.res_nE1_death[i] << ";" //10a
-        //             << res.res_nI_death[i] << ";" //11a
-        //             << res.res_trans_to_E1[i] << ";" //12a
-        //             << res.res_trans_to_I[i] << ";" //13a
-        //             
-        //             << res.res_nSuper[i] << ";" //2b
-        //             << res.res_nSuperS[i] << ";" //3b
-        //             << res.res_nSuperE1[i] << ";"//4b
-        //             << res.res_nSuperI[i] << ";" //5b
-        //             << res.res_SuperS_hunt[i] << ";" //***b
-        //             << res.res_SuperE1_hunt[i] << ";" //6b
-        //             << res.res_SuperI_hunt[i] << ";" //7b
-        //             << res.res_nSuperS_birth[i] << ";" //8b
-        //             << res.res_nSuperS_death[i] << ";" //9b
-        //             << res.res_nSuperE1_death[i] << ";" //10b
-        //             << res.res_nSuperI_death[i] << ";" //11b
-        //             << res.res_trans_to_SuperE1[i] << ";" //12b
-        //             << res.res_trans_to_SuperI[i] << ";" //13b
-        //                 
-        //             << res.res_Total_hunt[i] << ";"
-        //             << res.res_Total_inf[i] << ";"
-        //             << res.res_inf_hunt[i] << ";"
-        //             << res.res_quarter[i] << ";"
-        //             << res.res_FO[i] << ";"
-        //             << res.res_FO_time[i] << ";"
-        //             << res.res_Hunt_prev[i]
-        //             << std::endl;
-        //                 
-        //         }
-        //     }
-        //     *out_stream << rep_bs.rdbuf();
-        //     
-        // }
         
     }
                     

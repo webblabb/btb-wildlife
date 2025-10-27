@@ -1,6 +1,9 @@
 ####################
 ## Super Susceptible ##
 ####################
+system("g++ -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_CTMC.cpp -lgsl -lgslcblas -lm -o btb_wh.exe")
+system("g++ -L/usr/lib/x86_64-linux-gnu src/bTB_wildlifeModel_DTMC.cpp -lgsl -lgslcblas -lm -o btb_wh.exe")
+
 # Run time: variable for grid size
 print("Super susceptible epidemic extent simulations by proportion and herd size")
 rm(list = ls())

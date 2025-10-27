@@ -518,7 +518,7 @@ ReplicateResult btb_wl_model_CTMC(const Parameters& p)
             double interspecific_trans_rate = p.deer_deer_contact_rate * p.transmission_rate * (double(nS+nSuperS)) * (double(nI+nSuperI) / (p.county_habitat_area));
         
             //transmission from infected farm contact
-            double farm_trans_rate = farm_contact_rate_v[current_quarter_idx] * p.transmission_rate * (nS+(p.SS_farm_contact_factor*nSuperS));
+            double farm_trans_rate = farm_contact_rate_v[current_quarter_idx] * p.transmission_rate * (nS+p.SS_farm_contact_factor*nSuperS);
         
             //transition
             double transition_rate = (nE1 + nSuperE1) / (draw_gamma_gsl(p.sigma1_shape, p.sigma1_scale));
@@ -827,8 +827,7 @@ int main(int argc, char* argv[]){
      from within R and saved to a table.
      */
     
-    // auto start = std::chrono::high_resolution_clock::now();
-  
+    
     if(argc < 3)
     {
         std::cout << "Usage: " << argv[0] << " <n replicates> <config file / string of parameter values>" << std::endl;
@@ -912,46 +911,21 @@ int main(int argc, char* argv[]){
         << std::endl;
         *out_stream << ss.rdbuf();
         
-        // #pragma omp parallel for
-        // for(int rep_i=0; rep_i<n_reps; ++rep_i){
-        // 
-        //     ReplicateResult res = btb_wl_model_CTMC(p);
-        //     int n_tsteps = res.res_event.size();
-        //     std::stringstream rep_ss;
-        // 
-        // 
-        //     for(int i=0; i<n_tsteps; ++i){
-        //     
-        //         rep_ss << res.res_month[i] << ";"
-        //         << res.res_lambda[i]
-        //         << std::endl;
-        //         
-        //     }
-        //     *out_stream << rep_ss.rdbuf();
-        // }
-        
-        std::vector<std::string> rep_outputs(n_reps);
-        
-        // #ifdef USE_OPENMP
-        // #pragma omp parallel for
-        // #endif
         for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          ReplicateResult res = btb_wl_model_CTMC(p);
-          int n_tsteps = res.res_event.size();
-          std::stringstream rep_ss;
-          
-          for(int i=0; i<n_tsteps; ++i){
-            rep_ss << res.res_month[i] << ";"
-                   << res.res_lambda[i]
-                   << std::endl;
-          }
-          // Store per-replicate output
-          rep_outputs[rep_i] = rep_ss.str();
-        }
+
+            ReplicateResult res = btb_wl_model_CTMC(p);
+            int n_tsteps = res.res_event.size();
+            std::stringstream rep_ss;
         
-        // After the parallel region: main thread writes all output in order
-        for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          *out_stream << rep_outputs[rep_i];
+        
+            for(int i=0; i<n_tsteps; ++i){
+            
+                rep_ss << res.res_month[i] << ";"
+                << res.res_lambda[i]
+                << std::endl;
+                
+            }
+            *out_stream << rep_ss.rdbuf();
         }
     }
     else{
@@ -975,88 +949,42 @@ int main(int argc, char* argv[]){
         << std::endl;
         *out_stream << ss.rdbuf();
         
-        // Before the loop: create a vector to store per-replicate output
-        std::vector<std::string> rep_outputs(n_reps);
-        
-        // #ifdef USE_OPENMP
-        // #pragma omp parallel for
-        // #endif
         for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          ReplicateResult res = btb_wl_model_CTMC(p);
-          int n_tsteps = res.res_event.size();
-          std::stringstream rep_ss;
-          
-          for(int i=0; i<n_tsteps; ++i){
-            rep_ss << rep_i+1 << ";" //0*
-                   << i << ";" //1
-                   << res.res_time[i] << ";"
-                   << res.res_n[i] << ";" //2a
-                   << res.res_nSuper[i] << ";" //2b
-                   << res.res_nS[i] << ";" //3a
-                   << res.res_nSuperS[i] << ";" //3b
-                   << res.res_nE1[i] << ";"//4a
-                   << res.res_nSuperE1[i] << ";"//4b
-                   << res.res_nI[i] << ";" //5a
-                   << res.res_nSuperI[i] << ";" //5b
-                   << res.res_Total_inf[i] << ";"
-                   << res.res_event[i] << ";"
-                   << res.res_quarter[i] << ";"
-                   << res.res_month[i] << ";"
-                   << res.res_lambda[i]
-                   << std::endl;
-          }
-          // Store this replicate's output in the vector
-          rep_outputs[rep_i] = rep_ss.str();
-        }
+
+            ReplicateResult res = btb_wl_model_CTMC(p);
+            int n_tsteps = res.res_event.size();
+            std::stringstream rep_ss;
         
-        // After the parallel region, write all outputs in order
-        for(int rep_i=0; rep_i<n_reps; ++rep_i){
-          *out_stream << rep_outputs[rep_i];
+            for(int i=0; i<n_tsteps; ++i){
+                
+                rep_ss << rep_i+1 << ";" //0*
+                << i << ";" //1
+                    
+                << res.res_time[i] << ";"
+                
+                << res.res_n[i] << ";" //2a
+                << res.res_nSuper[i] << ";" //2b
+                    
+                << res.res_nS[i] << ";" //3a
+                << res.res_nSuperS[i] << ";" //3b
+                    
+                << res.res_nE1[i] << ";"//4a
+                << res.res_nSuperE1[i] << ";"//4b
+                    
+                << res.res_nI[i] << ";" //5a
+                << res.res_nSuperI[i] << ";" //5b
+                    
+                << res.res_Total_inf[i] << ";"
+                    
+                << res.res_event[i] << ";"
+                << res.res_quarter[i] << ";"
+                << res.res_month[i] << ";"
+                << res.res_lambda[i]
+                << std::endl;
+            }
+            *out_stream << rep_ss.rdbuf();
         }
-        
-        // #pragma omp parallel for
-        // for(int rep_i=0; rep_i<n_reps; ++rep_i){
-        // 
-        //     ReplicateResult res = btb_wl_model_CTMC(p);
-        //     int n_tsteps = res.res_event.size();
-        //     std::stringstream rep_ss;
-        // 
-        //     for(int i=0; i<n_tsteps; ++i){
-        //         
-        //         rep_ss << rep_i+1 << ";" //0*
-        //         << i << ";" //1
-        //             
-        //         << res.res_time[i] << ";"
-        //         
-        //         << res.res_n[i] << ";" //2a
-        //         << res.res_nSuper[i] << ";" //2b
-        //             
-        //         << res.res_nS[i] << ";" //3a
-        //         << res.res_nSuperS[i] << ";" //3b
-        //             
-        //         << res.res_nE1[i] << ";"//4a
-        //         << res.res_nSuperE1[i] << ";"//4b
-        //             
-        //         << res.res_nI[i] << ";" //5a
-        //         << res.res_nSuperI[i] << ";" //5b
-        //             
-        //         << res.res_Total_inf[i] << ";"
-        //             
-        //         << res.res_event[i] << ";"
-        //         << res.res_quarter[i] << ";"
-        //         << res.res_month[i] << ";"
-        //         << res.res_lambda[i]
-        //         << std::endl;
-        //     }
-        //     *out_stream << rep_ss.rdbuf();
-        // }
     }
-    
-    // auto end = std::chrono::high_resolution_clock::now();
-    // double elapsed_sec = std::chrono::duration<double>(end - start).count();
-    // 
-    // std::cout << "Elapsed time: " << elapsed_sec << " seconds\n";
-    
     return 0;
 }
 
