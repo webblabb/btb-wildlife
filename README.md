@@ -4,7 +4,9 @@ Mycobacterium bovis, the causative agent of bovine tuberculosis (bTB), poses an 
 
 # How to use
 
-pipeline.R runs all simulations and pub_plots.R generates all figures in the manuscript.
+sim_pipeline.R can be used to run simulations and generate figures in the main text of the manuscript. The HPC directory contains batch files and code that can be run on a high-performance computing cluster.
+
+dens_figs.R and freq_figs.R can be used to generate figures if data already exists in the data/ directory.
 
 ## Contact
-Please contact [Lindsay Beck-Johnson](mailto:L.Beck-Johnson@colostate.edu) with any questions.
+Please contact [Sam Smith](mailto:sm.smith@colostate.edu) with any questions.
