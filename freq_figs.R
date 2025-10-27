@@ -354,9 +354,9 @@ ggsave("figures/supp/fade_prob_map_beta_p2_hunt_freq.pdf", fade_prob_map, width 
 ggsave("figures/supp/mean_prev_map_beta_p2_hunt_freq.pdf", mean_prev_map, width = 12, height = 5, dpi = 300)
 
 # ---------------------------
-write.csv(R, file = paste0("./data/raw/LHS_summary_", infType, ".csv" ), row.names = F)
-remove(R)
-write.csv(bTB_wl_scaled, file = paste0("./data/raw/LHS_scaled_summary_", infType, ".csv" ), row.names = F)
+#write.csv(R, file = paste0("./data/raw/LHS_summary_", infType, ".csv" ), row.names = F)
+#remove(R)
+#write.csv(bTB_wl_scaled, file = paste0("./data/raw/LHS_scaled_summary_", infType, ".csv" ), row.names = F)
 #########################################
 
 #####################
