@@ -62,7 +62,8 @@ parameter_set_wl <-function(k = 10,
   # mortality parameters
   K = k # carrying capacity
   eta_nat = 0.05/12 # natural mortality rate
-  eta_hunt = (.2*k)/3 # seasonal hunter harvest -- set to depend on county population size and start pop. size
+  eta_hunt = - (1/3) * log(1 - 0.2)
+  # eta_hunt = (.2*k)/3 # seasonal hunter harvest -- set to depend on county population size and start pop. size
   theta = 2.0 # density dependent mortality asymmetry
   gamma = 2.0*eta_nat
   
@@ -152,7 +153,6 @@ parameter_set_wl <-function(k = 10,
   
   return(paramvec)  #output vector of parameters for a run of given farm size type and infection scenario
 }
-#k_lim = c(10,100); scenario = "spillover"; infected = .1; pct = T; SS_prop = 0.1; verbose = 0; Num_LHS_sets = 100; file.path = NA; file.out = F; file.name = "bTB_wl_LHS_pars"; seed = 43;
 # latin hypercube parameter generator
 LHS_ParSets <- function(k_lim = c(10,100), 
                         scenario = "spillover", 
@@ -271,58 +271,6 @@ LHS_ParSets <- function(k_lim = c(10,100),
   return(lh)
 }
 
-# deterministic model structures - no super spreaders
-SEI_model <- function (t, x, parms) {
-  
-  ## first extract the state variables
-  S <- as.numeric(x["S"])
-  E <- as.numeric(x["E"])
-  I <- as.numeric(x["I"])
-  
-  ## now extract the parameters
-  
-  # birth pulse parameters
-  Alpha_max <- as.numeric(parms["alpha_max"]) # birth rate amplitude
-  ksi <- as.numeric(parms["ksi"]) # proportion of newborn super spreaders
-  omega <- as.numeric(parms["omega"]) # birth rate phase shift
-  s <- as.numeric(parms["s"]) # birth rate synchrony
-  alpha_annual = as.numeric(parms["alpha"]) # annual birth rate value
-  
-  # mortality rate parameters
-  K <- as.numeric(parms["K"]) # environment carrying capacity / initial pop. size
-  eta_n <- as.numeric(parms["eta_nat"]) # baseline natural mortality rate
-  eta_h <- as.numeric(parms["eta_hunt"]) # hunt mortality rate
-  theta <- as.numeric(parms["theta"]) # scale disproportionality in density dependent mortality
-  gamma <- as.numeric(parms["gamma"])
-  #gamma <- alpha_annual/12 - eta_n # density dependent mortality scalar
-  
-  
-  # disease state parameters
-  beta <- as.numeric(parms["beta"]) #transmission rate
-  A <- as.numeric(parms["area"])
-  p1 <- 1 # as.numeric(parms["p1"]) # infectious contact prob
-  p2_vec <- c(as.numeric(parms["p2_q1"]), as.numeric(parms["p2_q2"]), as.numeric(parms["p2_q3"]), as.numeric(parms["p2_q4"])) # infected farm contact prob.
-  phi = as.numeric(parms["phi"]) # farm contact scaling factor for super spreaders
-  sigma <- 1 / as.numeric(parms["sigma1_mean"]) # mean rate of transition to infectious
-  if(as.numeric(parms["sigma1_mean"]) == 0){sigma = 0} # prevent infinite transition rate
-  
-  Q <- as.numeric(parms["start_q"]) # start quarter
-  
-  # define total population
-  N <- S + E + I
-  
-  dSdt <- alpha(Amp = Alpha_max, synchrony = s, phase = omega, start_q = Q, t)*N - p1*beta*S*(I)/A - p2(probs = p2_vec, start_q = Q, t)*beta*S - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N/K)*S - eta_hunt(hunt_mortality = eta_h, start_q = Q, t)*(S/N)  
-  
-  dEdt <- p1*beta*S*(I)/A + p2(probs = p2_vec, start_q = Q, t)*beta*S - sigma*E - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N/K)*E - eta_hunt(hunt_mortality = eta_h, start_q = Q, t)*(E/N)  
-  
-  dIdt <- sigma*E - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N/K)*I - eta_hunt(hunt_mortality = eta_h, start_q = Q, t)*(I/N)  
-  
-  ## combine results into a single vector
-  dxdt <- c(dSdt, dEdt, dIdt)
-  ## return result as a list!
-  list(dxdt)
-}
-
 SEI_model_full <- function (t, x, parms) {
   
   S  <- as.numeric(x["S"])
@@ -369,7 +317,7 @@ SEI_model_full <- function (t, x, parms) {
   dSdt  <- dSdt - beta_wild * S  * (I + sI) / A               # deer–deer
   dSdt  <- dSdt - beta_farm_t(t) * S                          # farm
   dSdt  <- dSdt - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N / K) * S
-  dSdt  <- dSdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * (S / N)
+  dSdt  <- dSdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * S # (S / N)
   
   dEdt  <-  beta_wild * S  * (I + sI) / A                     # deer–deer (S)
   dEdt  <- dEdt + beta_farm_t(t) * S                          # farm (S)
@@ -377,27 +325,27 @@ SEI_model_full <- function (t, x, parms) {
   dEdt  <- dEdt + beta_farm_t(t) * phi * sS                   # farm (SS boosted)
   dEdt  <- dEdt - sigma * E
   dEdt  <- dEdt - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N / K) * E
-  dEdt  <- dEdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * (E / N)
+  dEdt  <- dEdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * E #  (E / N)
   
   dIdt  <-  sigma * E
   dIdt  <- dIdt - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N / K) * I
-  dIdt  <- dIdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * (I / N)
+  dIdt  <- dIdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * I # (I / N)
   
   dsSdt <-  ksi * alpha(Amp = Alpha_max, synchrony = s, phase = omega, start_q = Q, t) * N
   dsSdt <- dsSdt - beta_wild * sS * (I + sI) / A              # deer–deer
   dsSdt <- dsSdt - beta_farm_t(t) * phi * sS                  # farm (SS boosted)
   dsSdt <- dsSdt - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N / K) * sS
-  dsSdt <- dsSdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * (sS / N)
+  dsSdt <- dsSdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * sS # (sS / N)
   
   dsEdt <-  beta_wild * sS * (I + sI) / A                     # deer–deer (SS)
   dsEdt <- dsEdt + beta_farm_t(t) * phi * sS                  # farm (SS boosted)
   dsEdt <- dsEdt - sigma * sE
   dsEdt <- dsEdt - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N / K) * sE
-  dsEdt <- dsEdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * (sE / N)
+  dsEdt <- dsEdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * sE # (sE / N)
   
   dsIdt <-  sigma * sE
   dsIdt <- dsIdt - eta(baseline_mortality = eta_n, theta = theta, y_scale = gamma, N_frac = N / K) * sI
-  dsIdt <- dsIdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * (sI / N)
+  dsIdt <- dsIdt - eta_hunt(hunt_mortality = eta_h, start_q = Q, t) * sI # (sI / N)
   
   list(c(dSdt, dEdt, dIdt, dsSdt, dsEdt, dsIdt))
 }
@@ -1330,13 +1278,17 @@ run_wl_sim <- function(
     sI = as.integer(pars["SuperI_0"])
   )
   
+  if (freq) {
+    pars["beta"] <- pars["beta"]*pars["K"]
+  }
+  
   if (ode){
     tic <- Sys.time()
     if (freq) {
-      out <- ode(func = SEI_model_full_freq, y = X0_full, times = times, parms = pars, method = "lsoda" ) |> as.data.frame()
+      out <- ode(func = SEI_model_full_freq, y = X0_full, times = times, parms = pars, method = "rk4" ) |> as.data.frame()
       infType <- paste0("freq_",infType)
     } else {
-      out <- ode(func = SEI_model_full, y = X0_full, times = times, parms = pars, method = "lsoda" ) |> as.data.frame()
+      out <- ode(func = SEI_model_full, y = X0_full, times = times, parms = pars, method = "rk4" ) |> as.data.frame()
     }
     toc <- Sys.time(); print(toc - tic)
     

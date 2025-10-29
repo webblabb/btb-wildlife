@@ -27,8 +27,8 @@ suppressPackageStartupMessages({
 source("bTBwl_func.R")
 
 # Configure parallel backend
-# n.cores <- max(1, floor(parallel::detectCores() * 3/4))
-n.cores <- as.numeric(Sys.getenv("SLURM_CPUS_PER_TASK", unset = detectCores()))
+n.cores <- max(1, floor(parallel::detectCores() * 3/4))
+# n.cores <- as.numeric(Sys.getenv("SLURM_CPUS_PER_TASK", unset = detectCores()))
 cl <- makeCluster(n.cores)
 registerDoParallel(cl)
 
@@ -89,8 +89,8 @@ if (section_id == 2) {
 if (section_id == 3) {
   cat("Running Section 3: Herd size × harvest intensity\n")
   
-  sizes <- seq(from = 0, to = 750, length.out = 31)[-1]
-  hunt_pct <- seq(from = 0, to = 1, length.out = 21)
+  sizes <- seq(from = 0, to = 750, length.out = 11)[-1] # 31
+  hunt_pct <- - (1/3) * log(1 - seq(from = 0, to = 0.99999, length.out = 11)) # seq(from = 0, to = 1, length.out = 21)
   
   param_grid <- expand_grid(size = sizes, infType = "seeded", hunt = hunt_pct) |>
     mutate(overrides = purrr::map(hunt, ~list(eta_hunt = .x)))
@@ -138,9 +138,9 @@ if (section_id == 4) {
          p2_q3 = f * baseline_p2$p2_q3, p2_q4 = f * baseline_p2$p2_q4)
   }
   
-  p1_red_grid <- seq(0, 1, length.out = 21)
-  farm_red_grid <- seq(0, 1, length.out = 21)
-  hunt_levels <- c(0.2, 0.5, 0.95)
+  p1_red_grid <- seq(0, 1, length.out = 11)
+  farm_red_grid <- seq(0, 1, length.out = 11)
+  hunt_levels <- - (1/3) * log(1 - c(0.2, 0.5, 0.95))  # c(0.2, 0.5, 0.95)
   size_K <- 250
   scenarios <- "spillover"
   

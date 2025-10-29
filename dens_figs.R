@@ -201,7 +201,9 @@ ggsave("figures/fade_prob_map_num.pdf", fade_prob_map, width = 7.5, height = 6, 
 ## -----------------------------------------------------------
 
 results <- read.csv("data/hunt_herdsize.csv") |>
-  mutate(fadeout = ifelse(fadeout == 0, NA, fadeout))
+  mutate(fadeout = ifelse(fadeout == 0, NA, fadeout),
+         pct_hunt = 1 - exp(-3 * pct_hunt))
+  
 # ---------
 fade_prob_map_hunt <- ggplot(
   data = results,
@@ -216,8 +218,8 @@ fade_prob_map_hunt <- ggplot(
     palette = "Spectral",
     direction = -1,
     na.value = "gray21",
-    breaks = round(seq(0, max(results$fadeout, na.rm = TRUE), length.out = 4),1),
-    limits = c(0, max(results$fadeout, na.rm = TRUE)),
+    breaks = round(seq(0, max(results$fadeout, na.rm = TRUE), length.out = 4),2),
+    limits = c(0, round(max(results$fadeout, na.rm = TRUE),2)),
     name = expression(italic(p) * "(fadeout)")
   ) +
   scale_x_continuous(breaks = c(25, 250, 500, 750, 1000)) +
@@ -254,7 +256,7 @@ mean_map <- ggplot(
     palette = "Spectral",
     direction = -1,
     breaks = round(seq(0, max(results$prev_ratio, na.rm = TRUE), length.out = 5), 2),
-    limits = round(c(0, max(results$prev_ratio, na.rm = TRUE)),4),
+    limits = round(c(0, max(results$prev_ratio, na.rm = TRUE)),2),
     name = "mean estimated\nprevalence ratio"
   ) +
   scale_x_continuous(breaks = c(25, 250, 500, 750, 1000)) +
@@ -285,7 +287,9 @@ ggsave("figures/prev_est_map_hunt.pdf", mean_map, width = 7.5, height = 6, dpi =
 ## Metrics: p(fadeout), mean infection prevalence (final tstep)
 ## -----------------------------------------------------------
 
-results <- read.csv("data/beta_p2_hunt.csv") 
+results <- read.csv("data/beta_p2_hunt.csv") |>
+  mutate(fadeout = ifelse(fadeout == 0, NA, fadeout),
+         pct_hunt = 1 - exp(-3 * pct_hunt)) 
 
 p1_red_grid    <- seq(0, 1, length.out = 21)   # % reduction of p1 (0..1)
 farm_red_grid  <- seq(0, 1, length.out = 21)   # % reduction of farm-contact (0..1)
@@ -389,7 +393,7 @@ bTB_wl_scaled <- read.csv("data/LHS_scaled_summary_seeded_q1.csv")
 averaged = T
 mono_plots = T
 bTB_wl_scaled <- bTB_wl_scaled[,!(names(bTB_wl_scaled) %in% c("p1","ksi","phi",'N', "pars", "S_0", "E1_0", "SuperS_0", "SuperE1_0", "I_0", "SuperI_0"))]
-names(bTB_wl_scaled) <- c('Total Infected', 'fadeout', 'fadeout time', 'Hunt Prevalence', 
+names(bTB_wl_scaled) <- c('Total Infected', 'Fadeout', 'Fadeout Time', 'Hunt Prevalence', 
                           'K', 'eta_hunt', 'eta_nat', 'theta', 'gamma', 
                           'alpha_max',  'omega', 's', 
                           'beta',  'p2_q1', 'p2_q2', 'p2_q3', 'p2_q4',  'sigma1_mean', 'sigma1_rate', 
@@ -416,7 +420,7 @@ print(names(bTB_wl_scaled)[1:10])
 # Should show: "Total.Infected", "fadeout", "fadeout.time", "Hunt.Prevalence", etc.
 
 #--- Variables ---#
-responses <- c("Total.Infected", "fadeout", "fadeout.time", "Hunt.Prevalence")
+responses <- c("Total.Infected", "Fadeout", "Fadeout.time", "Hunt.Prevalence")
 
 parameters <- c(
   "K","eta_hunt","eta_nat","theta","gamma","alpha_max","omega","s",
@@ -453,7 +457,7 @@ if (exists("mono_plots") && isTRUE(mono_plots)) {
 
 #####################
 setwd("../..")
-names(bTB_wl_scaled) <- c('Total Infected', 'fadeout', 'fadeout time', 'Hunt Prevalence', 
+names(bTB_wl_scaled) <- c('Total Infected', 'Fadeout', 'Fadeout Time', 'Hunt Prevalence', 
                           'K', 'eta_hunt', 'eta_nat', 'theta', 'gamma', 
                           'alpha_max', 'omega', 's', 
                           'beta', 'p2_q1', 'p2_q2', 'p2_q3', 'p2_q4', 'sigma1_mean', 'sigma1_rate', 
@@ -462,7 +466,7 @@ names(bTB_wl_scaled) <- c('Total Infected', 'fadeout', 'fadeout time', 'Hunt Pre
 # --------------
 # PRCC
 blue<-c('#2171b5')
-responses <- c("Total Infected", "fadeout", "fadeout time", "Hunt Prevalence")
+responses <- c("Total Infected", "Fadeout", "Fadeout Time", "Hunt Prevalence")
 parameters <- c("K","eta_hunt","eta_nat","theta","gamma","alpha_max",
                 "omega","s","beta","sigma1_mean","sigma1_rate")
 
@@ -481,7 +485,7 @@ param_order_prcc <- prcc_df %>%
 prcc_df <- prcc_df %>%
   mutate(var = factor(var, levels = param_order_prcc),
          est = ifelse(p.value >= 0.05, NA, est),
-         response = factor(response, levels = c("Total Infected", "fadeout", "fadeout time", "Hunt Prevalence")),
+         response = factor(response, levels = c("Total Infected", "Fadeout", "Fadeout Time", "Hunt Prevalence")),
          response = recode(response,
                            "Total Infected" = "Total Infected",
                            "fadeout" = "fadeout",
@@ -510,7 +514,7 @@ ggsave("figures/sens_plot_prcc.pdf", sens, width = 14, height = 6, dpi = 300)
 
 # --------------
 # Regression
-responses <- c("`Total Infected`", "fadeout", "`fadeout time`", "`Hunt Prevalence`")
+responses <- c("`Total Infected`", "Fadeout", "`Fadeout Time`", "`Hunt Prevalence`")
 
 # Run LMs for all responses
 lm_df <- map_dfr(responses, ~ run_lm(
@@ -522,11 +526,11 @@ lm_df <- map_dfr(responses, ~ run_lm(
 lm_df <- lm_df %>%
   mutate(parameter = factor(parameter, levels = param_order_prcc),
          estimate = ifelse(p_value >= 0.05, NA, estimate),
-         response = factor(response, levels = c("`Total Infected`", "fadeout", "`fadeout time`", "`Hunt Prevalence`")),
+         response = factor(response, levels = c("`Total Infected`", "Fadeout", "`Fadeout Time`", "`Hunt Prevalence`")),
          response = recode(response,
                            "`Total Infected`" = "Total Infected",
-                           "fadeout" = "fadeout",
-                           "`fadeout time`" = "fadeout time",
+                           "Fadeout" = "Fadeout",
+                           "`Fadeout Time`" = "Fadeout Time",
                            "`Hunt Prevalence`" = "Hunt Prevalence"))
 
 reg <- ggplot(lm_df, aes(y = estimate, x = parameter)) + 
@@ -552,7 +556,7 @@ ggsave("figures/supp/sens_plot_reg.pdf", reg, width = 14, height = 6, dpi = 300)
 
 # --------------
 # Regression with interactions
-responses <- c("`Total Infected`", "fadeout", "`fadeout time`", "`Hunt Prevalence`")
+responses <- c("`Total Infected`", "Fadeout", "`Fadeout Time`", "`Hunt Prevalence`")
 
 # Run LMs for all responses
 lm_df <- map_dfr(responses, ~ run_lm_int(
@@ -563,11 +567,11 @@ lm_df <- map_dfr(responses, ~ run_lm_int(
 
 lm_df <- lm_df %>%
   filter(p_value < 0.01 & abs(estimate) > 0.001) %>%
-  mutate(response = factor(response, levels = c("`Total Infected`", "fadeout", "`fadeout time`", "`Hunt Prevalence`")),
+  mutate(response = factor(response, levels = c("`Total Infected`", "Fadeout", "`Fadeout Time`", "`Hunt Prevalence`")),
          response = recode(response,
                            "`Total Infected`" = "Total Infected",
-                           "fadeout" = "fadeout",
-                           "`fadeout time`" = "fadeout time",
+                           "Fadeout" = "Fadeout",
+                           "`Fadeout Time`" = "Fadeout Time",
                            "`Hunt Prevalence`" = "Hunt Prevalence"))
 
 # Run LMs for all responses
@@ -586,11 +590,11 @@ sig_params <- lm_df %>%
 # Keep only rows for those parameters (across *all* responses)
 lm_df <- lm_df %>%
   filter(parameter %in% sig_params) %>%
-  mutate(response = factor(response, levels = c("`Total Infected`", "fadeout", "`fadeout time`", "`Hunt Prevalence`")),
+  mutate(response = factor(response, levels = c("`Total Infected`", "Fadeout", "`Fadeout Time`", "`Hunt Prevalence`")),
          response = recode(response,
                            "`Total Infected`" = "Total Infected",
-                           "fadeout" = "fadeout",
-                           "`fadeout time`" = "fadeout time",
+                           "Fadeout" = "Fadeout",
+                           "`Fadeout Time`" = "Fadeout Time",
                            "`Hunt Prevalence`" = "Hunt Prevalence"),
          estimate = ifelse(p_value >= 0.05, 0, estimate))
 

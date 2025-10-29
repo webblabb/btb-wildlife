@@ -62,7 +62,8 @@ parameter_set_wl <-function(k = 10,
   # mortality parameters
   K = k # carrying capacity
   eta_nat = 0.05/12 # natural mortality rate
-  eta_hunt = (.2*k)/3 # seasonal hunter harvest -- set to depend on county population size and start pop. size
+  eta_hunt = - (1/3) * log(1 - 0.2)
+  # eta_hunt = (.2*k)/3 # seasonal hunter harvest -- set to depend on county population size and start pop. size
   theta = 2.0 # density dependent mortality asymmetry
   gamma = 2.0*eta_nat
   
@@ -1330,13 +1331,17 @@ run_wl_sim <- function(
     sI = as.integer(pars["SuperI_0"])
   )
   
+  if (freq) {
+    pars["beta"] <- pars["beta"]*pars["K"]
+  }
+  
   if (ode){
     tic <- Sys.time()
     if (freq) {
-      out <- ode(func = SEI_model_full_freq, y = X0_full, times = times, parms = pars, method = "lsoda" ) |> as.data.frame()
+      out <- ode(func = SEI_model_full_freq, y = X0_full, times = times, parms = pars, method = "rk4" ) |> as.data.frame()
       infType <- paste0("freq_",infType)
     } else {
-      out <- ode(func = SEI_model_full, y = X0_full, times = times, parms = pars, method = "lsoda" ) |> as.data.frame()
+      out <- ode(func = SEI_model_full, y = X0_full, times = times, parms = pars, method = "rk4" ) |> as.data.frame()
     }
     toc <- Sys.time(); print(toc - tic)
     

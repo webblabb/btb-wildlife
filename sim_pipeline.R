@@ -5,6 +5,9 @@
 system("g++ -L/usr/lib/x86_64-linux-gnu bTB_wildlifeModel_CTMC.cpp -lgsl -lgslcblas -lm -o wl_model_CTMC.exe")
 system("g++ -L/usr/lib/x86_64-linux-gnu bTB_wildlifeModel_DTMC.cpp -lgsl -lgslcblas -lm -o wl_model_DTMC.exe")
 
+system("g++ -L/usr/lib/x86_64-linux-gnu tb_wildlife_freq_cont.cpp -lgsl -lgslcblas -lm -o wl_model_CTMC.exe")
+system("g++ -L/usr/lib/x86_64-linux-gnu tb_wildlife_freq_disc.cpp -lgsl -lgslcblas -lm -o wl_model_DTMC.exe")
+
 suppressPackageStartupMessages({
   library(tidyverse)
   library(deSolve)
@@ -37,7 +40,7 @@ param_grid <- expand_grid(
 for (i in 1:nrow(param_grid)) {
   row <- param_grid[i,]
   
-  run_wl_sim(size = row$size, infType = row$infType, save_plots = TRUE, ode = T) 
+  run_wl_sim(size = row$size, infType = row$infType, save_plots = TRUE, ode = T, freq = T) 
 }
 
 ## -----------------------------------------------------------
